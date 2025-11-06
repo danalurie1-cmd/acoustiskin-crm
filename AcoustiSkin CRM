@@ -1,0 +1,405 @@
+{
+  "name": "acoustiskin-crm",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm run dev",
+    "install-all": "npm install && cd client && npm install",
+    "seed": "node server/scripts/seed.js",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.13",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
+  }
+}MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/acoustiskin_crm
+JWT_SECRET=supersecretkey123456789
+APP_URL=http://localhost:3000
+PORT=5000
+NODE_ENV=development
+node_modules/
+.env
+client/node_modules/
+client/dist/
+{
+  "env": { "browser": true, "es2021": true, "node": true },
+  "extends": ["eslint:recommended"],
+  "parserOptions": { "ecmaVersion": 12, "sourceType": "module" },
+  "rules": {}
+}
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
+
+dotenv.config();
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+
+const PORT = process.env.PORT || 5000;
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
+  .catch(err => console.error(err));
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema({
+  firstName: String,
+  lastName: String,
+  email: { type: String, unique: true },
+  password: String,
+  role: { type: String, default: 'sales_rep' },
+  department: String,
+  phone: String
+});
+
+export default mongoose.model('User', userSchema);
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+
+const router = express.Router();
+
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user || !await bcrypt.compare(password, user.password)) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { firstName: user.firstName, lastName: user.lastName, role: user.role } });
+});
+
+export default router;
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+import User from '../models/User.js';
+
+dotenv.config();
+
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error('MONGODB_URI is missing!');
+  process.exit(1);
+}
+
+const seed = async () => {
+  await mongoose.connect(uri);
+  await User.deleteMany({});
+
+  const hash = await bcrypt.hash('AcoustiSkin2024!', 10);
+  await User.create({
+    firstName: 'Admin', lastName: 'User', email: 'admin@acoustiskin.com',
+    password: hash, role: 'admin'
+  });
+
+  console.log('Seeded: admin@acoustiskin.com / AcoustiSkin2024!');
+  process.exit(0);
+};
+
+seed().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: { port: 3000 }
+});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/acoustiskin-icon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AcoustiSkin CRM</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout.jsx';
+import Login from './pages/Login.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+import { createContext, useContext, useState } from 'react';
+import api from '../utils/api.js';
+import { useNavigate } from 'react-router-dom';
+
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  const login = async (email, password) => {
+    const { data } = await api.post('/auth/login', { email, password });
+    localStorage.setItem('token', data.token);
+    api.defaults.headers.Authorization = `Bearer ${data.token}`;
+    setUser(data.user);
+    navigate('/dashboard');
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    delete api.defaults.headers.Authorization;
+    setUser(null);
+    navigate('/login');
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api'
+});
+
+export default api;
+import React, { useState } from 'react';
+import { Outlet, NavLink } from 'react-router-dom';
+import AcoustiSkinLogo from './AcoustiSkinLogo.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import {
+  HomeIcon, CalendarIcon, UserGroupIcon, BuildingOfficeIcon,
+  UsersIcon, CurrencyDollarIcon, ClipboardDocumentListIcon,
+  ChartBarIcon, Cog6ToothIcon, Bars3Icon, XMarkIcon,
+  BellIcon, UserCircleIcon
+} from '@heroicons/react/24/outline';
+
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Leads', href: '/leads', icon: UserGroupIcon },
+  // Add more later
+];
+
+export default function Layout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="h-screen flex overflow-hidden bg-gray-100">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block w-64 bg-gradient-to-b from-indigo-700 to-indigo-900`}>
+        <div className="p-4"><AcoustiSkinLogo /></div>
+        <nav className="mt-8 px-2 space-y-1">
+          {navigation.map(item => (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              className={({ isActive }) =>
+                `flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                  isActive ? 'bg-indigo-800 text-white' : 'text-indigo-100 hover:bg-indigo-600'
+                }`
+              }
+            >
+              <item.icon className="mr-3 h-6 w-6" />
+              {item.name}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="p-4 border-t border-indigo-800">
+          <div className="flex items-center">
+            <UserCircleIcon className="h-10 w-10 text-indigo-300" />
+            <div className="ml-3">
+              <p className="text-sm text-white">{user?.firstName} {user?.lastName}</p>
+              <button onClick={logout} className="text-xs text-indigo-200 hover:text-white">Sign out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col">
+        <header className="bg-white shadow h-16 flex items-center px-4">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden">
+            {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+          </button>
+          <div className="flex-1 flex justify-end px-4">
+            <span className="text-sm text-gray-500">Powered by <strong className="text-indigo-600">AcoustiSkin</strong></span>
+          </div>
+        </header>
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+export default function AcoustiSkinLogo() {
+  return (
+    <div className="flex items-center text-white">
+      <svg className="h-10 w-auto" viewBox="0 0 200 40" fill="currentColor">
+        <rect x="5" y="15" width="3" height="10" rx="1.5" opacity="0.6"/>
+        <rect x="12" y="10" width="3" height="20" rx="1.5" opacity="0.7"/>
+        <rect x="19" y="5" width="3" height="30" rx="1.5" opacity="0.8"/>
+        <rect x="26" y="2" width="3" height="36" rx="1.5" opacity="0.9"/>
+        <text x="60" y="28" className="text-2xl font-bold">AcoustiSkin</text>
+      </svg>
+      <span className="ml-2 text-xs tracking-wider">CRM</span>
+    </div>
+  );
+}
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import AcoustiSkinLogo from '../components/AcoustiSkinLogo.jsx';
+import toast from 'react-hot-toast';
+
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await login(email, password);
+      toast.success('Welcome!');
+    } catch (err) {
+      toast.error('Invalid login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center p-4">
+      <div className="bg-white/95 backdrop-blur p-8 rounded-lg shadow-xl w-full max-w-md">
+        <div className="flex justify-center mb-6">
+          <AcoustiSkinLogo />
+        </div>
+        <h2 className="text-2xl font-bold text-center mb-6">Sign in to AcoustiSkin CRM</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border rounded-md"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border rounded-md"
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+        <p className="text-center mt-4 text-sm text-gray-600">
+          Demo: <strong>admin@acoustiskin.com</strong> / <strong>AcoustiSkin2024!</strong>
+        </p>
+      </div>
+    </div>
+  );
+}
+import { useAuth } from '../contexts/AuthContext.jsx';
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold">Welcome, {user?.firstName}!</h1>
+      <p className="mt-4 text-gray-600">Your AcoustiSkin CRM is ready.</p>
+    </div>
+  );
+}
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "axios": "^1.6.0",
+    "react-hot-toast": "^2.4.1",
+    "@heroicons/react": "^2.1.1"
+  },
+  "devDependencies": {
+
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
+  }
+}
+# 1. Clone or create folder
+mkdir acoustiskin-crm && cd acoustiskin-crm
+
+# 2. Paste all files above
+
+# 3. Install
+npm run install-all
+
+# 4. Create .env from .env.example and fill MONGODB_URI
+
+# 5. Seed data
+npm run seed
+
+# 6. Start
+npm run dev

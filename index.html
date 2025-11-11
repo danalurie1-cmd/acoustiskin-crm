@@ -587,7 +587,7 @@ const renderDashboard = () => {
 // --- IMPLEMENTATION FUNCTIONS (List Rendering) ---
 
 const renderCompanies = (isCustomerView = false) => {
-    const container = isCustomerView ? document.getElementById('customer-list') : document.getElementById('company-list');
+    const container = document.getElementById('customer-list') : document.getElementById('company-list');
     let list = state.companies;
     if (isCustomerView) {
         list = list.filter(c => c.status === 'Customer');

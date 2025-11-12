@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -357,4 +356,762 @@ const renderWeekly = c => {
 
         html += `<div class="cal-day ${isToday?'today':''}" onclick="setCalendarViewMode('daily'); currentCalendarDate.setDate(${day.getDate()}); renderCalendar();">
                     <strong>${day.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</strong>
-                    <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600">+
+                    <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600">+ Appt</button>
+                    <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 ml-1">+ To-Do</button>
+                    ${sortedEvents.map(e => {
+                        const timeDisplay = e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).toLocaleTimeString([],{hour:'numeric', minute:'2-digit'});
+                        const typeClass = e.isTask ? 'bg-blue-200 text-blue-800' : 'bg-green-200 text-green-800';
+                        return `<div class="cal-slot ${typeClass} cursor-pointer" onclick="event.stopPropagation(); ${e.isTask ? `openTaskModal('${e.id}')` : `openScheduleModal('${e.date}')`}">${timeDisplay} ${e.title.replace('Task: ','').split('(')[0]}</div>`;
+                    }).join('')}
+                </div>`;
+    }
+    html += `</div></div>`;
+    c.innerHTML = html;
+};
+const renderMonthly = c => {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    const first = new Date(year, month, 1).getDay();
+    const days = new Date(year, month + 1, 0).getDate();
+    let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">${currentCalendarDate.toLocaleString('default',{month:'long',year:'numeric'})}</h3>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-1">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div class="grid grid-cols-7 gap-1">`;
+    for(let i=0;i<first;i++) html += '<div></div>';
+    for(let d=1;d<=days;d++){
+        const date = new Date(year, month, d);
+        const ds = date.toISOString().slice(0,10);
+        const events = getApptsForDay(ds);
+        const isToday = date.toDateString() === new Date().toDateString();
+        
+        const sortedEvents = events.sort((a, b) => {
+            const timeA = a.time === 'All Day' ? -1 : parseInt((a.date || a.time).slice(0, 2));
+            const timeB = b.time === 'All Day' ? -1 : parseInt((b.date || b.time).slice(0, 2));
+            return timeA - timeB;
+        });
+
+        html += `<div class="cal-day ${isToday?'today':''}" onclick="setCalendarViewMode('daily'); currentCalendarDate.setDate(${d}); renderCalendar();">
+                    <strong>${d}</strong>
+                    <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600 block w-full">+ Appt</button>
+                    <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 block w-full">+ To-Do</button>
+                    ${sortedEvents.slice(0,2).map(e => {
+                        const timeDisplay = e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).toLocaleTimeString([],{hour:'numeric'});
+                        const typeClass = e.isTask ? 'bg-blue-200 text-blue-800' : 'bg-green-200 text-green-800';
+                        return `<div class="cal-slot ${typeClass} overflow-hidden whitespace-nowrap text-ellipsis" title="${e.title}">${timeDisplay} ${e.title.replace('Task: ','').split('(')[0]}</div>`;
+                    }).join('')}
+                </div>`;
+    }
+    html += `</div></div>`;
+    c.innerHTML = html;
+};
+
+// Updated openScheduleModal to include a time selection
+window.openScheduleModal = d => {
+  const [datePart, timePart] = d.split('T');
+  const ex = state.appointments.find(a=>a.date===d) || {};
+  
+  const title = prompt(`Appointment on ${new Date(datePart).toLocaleDateString()}: Title`, ex.title || '') || '';
+  if(!title && ex.id){ if(confirm('Delete this appointment?')) deleteEntity('appointments',ex.id); return; }
+  if(!title) return;
+  
+  const time = prompt('Time (HH:MM format, e.g., 09:30):', timePart.slice(0, 5) || '09:00') || '09:00';
+  const newDate = `${datePart}T${time}`;
+  const note = prompt('Notes:',ex.note || '') || '';
+  
+  updateEntity('appointments',{id:ex.id || uuid(), date: newDate, title, note});
+};
+
+/* ==================== TASKS (Point 6) ==================== */
+window.openTaskModal = (id=null, date=null) => {
+  const t = id ? state.tasks.find(x=>x.id===id) : {};
+  const html = `
+    <form onsubmit="event.preventDefault(); saveTask(this, '${id||''}');">
+      <input type="text" name="title" placeholder="Task Title" value="${t.title||''}" required class="w-full p-2 border rounded mb-3">
+      <input type="date" name="dueDate" value="${date||t.dueDate||''}" required class="w-full p-2 border rounded mb-3">
+      <select name="time" class="w-full p-2 border rounded mb-3">
+        <option value="All Day" ${t.time==='All Day'?'selected':''}>All Day</option>
+        ${Array.from({length: 15}, (_, i) => i + 7).map(h => {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          return `<option value="${time}" ${t.time===time?'selected':''}>${time}</option>`;
+        }).join('')}
+      </select>
+      <select name="priority" class="w-full p-2 border rounded mb-3">
+        <option value="High" ${t.priority==='High'?'selected':''}>High</option>
+        <option value="Medium" ${t.priority==='Medium'?'selected':''}>Medium</option>
+        <option value="Low" ${t.priority==='Low'?'selected':''}>Low</option>
+      </select>
+      <select name="status" class="w-full p-2 border rounded mb-3">
+        ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id?'Edit Task':'New Task',html);
+};
+window.saveTask = (f,id) => {
+  const data = {
+    title: f.title.value,
+    dueDate: f.dueDate.value,
+    time: f.time.value,
+    priority: f.priority.value,
+    status: f.status.value,
+  };
+  updateEntity('tasks', id?{id,...data}:{...data});
+  closeUniversalModal();
+};
+
+/* ==================== CORE CRM FORMS (Points 2, 3, 4) ==================== */
+
+// Point 2: Company Form (Enterprise Details)
+window.openCompanyModal = (id=null) => {
+  const c = id ? state.companies.find(x=>x.id===id) : {};
+  const html = `
+    <form onsubmit="event.preventDefault(); saveCompany(this, '${id||''}');" class="space-y-4">
+      <h3 class="font-bold text-lg border-b pb-2">Basic Details</h3>
+      <input type="text" name="name" placeholder="Company Name" value="${c.name||''}" required class="w-full p-2 border rounded">
+      <input type="text" name="industry" placeholder="Industry (e.g., Retail, Tech)" value="${c.industry||''}" class="w-full p-2 border rounded">
+      <div class="grid grid-cols-3 gap-4">
+        <select name="status" class="p-2 border rounded">
+          ${['Prospect','Lead','Customer','Partner'].map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <select name="customerTier" class="p-2 border rounded">
+          ${['None','Bronze','Silver','Gold'].map(t => `<option value="${t}" ${c.customerTier===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <input type="text" name="owner" placeholder="Account Owner" value="${c.owner||'Admin'}" required class="p-2 border rounded">
+      </div>
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Contact & Financials</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="tel" name="phone" placeholder="Main Phone" value="${c.phone||''}" class="p-2 border rounded">
+        <input type="email" name="email" placeholder="Billing Email" value="${c.email||''}" class="p-2 border rounded">
+      </div>
+      <input type="number" name="revenue" placeholder="Annual Revenue ($)" value="${c.revenue||''}" class="w-full p-2 border rounded">
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Address</h3>
+      <input type="text" name="address" placeholder="Street Address" value="${c.address||''}" class="w-full p-2 border rounded">
+      <div class="grid grid-cols-3 gap-4">
+        <input type="text" name="city" placeholder="City" value="${c.city||''}" class="p-2 border rounded">
+        <input type="text" name="state" placeholder="State/Province" value="${c.state||''}" class="p-2 border rounded">
+        <input type="text" name="zip" placeholder="Zip/Postal" value="${c.zip||''}" class="p-2 border rounded">
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save Company</button>
+        ${id ? `<button type="button" onclick="if(confirm('Delete ${c.name}?')) deleteEntity('companies','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id?'Edit Company: '+c.name:'Add New Company', html);
+};
+
+window.saveCompany = (f, id) => {
+  const data = {
+    name: f.name.value,
+    status: f.status.value,
+    customerTier: f.customerTier.value,
+    revenue: parseFloat(f.revenue.value || 0),
+    owner: f.owner.value,
+    industry: f.industry.value,
+    phone: f.phone.value,
+    email: f.email.value,
+    address: f.address.value,
+    city: f.city.value,
+    state: f.state.value,
+    zip: f.zip.value,
+  };
+  updateEntity('companies', id ? {id, ...data} : data);
+};
+
+// Point 3 & 4: Contact Form (Used for Customers)
+window.openContactModal = (id=null) => {
+  const contact = id ? state.contacts.find(x=>x.id===id) : {};
+
+  const companyOptions = state.companies
+    .map(c => `<option value="${c.id}" ${c.id === contact.companyId ? 'selected' : ''}>${c.name} (${c.status})</option>`)
+    .join('');
+    
+  const html = `
+    <form onsubmit="event.preventDefault(); saveContact(this, '${id||''}');" class="space-y-4">
+      <h3 class="font-bold text-lg border-b pb-2">Personal Details</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="text" name="firstName" placeholder="First Name" value="${contact.firstName||''}" required class="p-2 border rounded">
+        <input type="text" name="lastName" placeholder="Last Name" value="${contact.lastName||''}" required class="p-2 border rounded">
+      </div>
+      <input type="text" name="jobTitle" placeholder="Job Title" value="${contact.jobTitle||''}" class="w-full p-2 border rounded">
+      
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Affiliation & Contact</h3>
+      <select name="companyId" class="w-full p-2 border rounded">
+        <option value="">-- Select Company (Required) --</option>
+        ${companyOptions}
+      </select>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="email" name="email" placeholder="Email" value="${contact.email||''}" required class="p-2 border rounded">
+        <input type="tel" name="phone" placeholder="Phone (Work)" value="${contact.phone||''}" class="p-2 border rounded">
+        <input type="tel" name="mobile" placeholder="Phone (Mobile)" value="${contact.mobile||''}" class="p-2 border rounded">
+        <input type="text" name="pickleballClub" placeholder="Pickleball Club (Optional)" value="${contact.pickleballClub||''}" class="p-2 border rounded">
+      </div>
+
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save Contact</button>
+        ${id ? `<button type="button" onclick="if(confirm('Delete ${contact.firstName} ${contact.lastName}?')) deleteEntity('contacts','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id ? 'Edit Contact' : 'Add New Contact/Customer', html);
+};
+
+window.saveContact = (f, id) => {
+  if (!f.companyId.value) return alert('A contact must be associated with a company.');
+  const data = {
+    firstName: f.firstName.value,
+    lastName: f.lastName.value,
+    companyId: f.companyId.value,
+    jobTitle: f.jobTitle.value,
+    email: f.email.value,
+    phone: f.phone.value,
+    mobile: f.mobile.value,
+    pickleballClub: f.pickleballClub.value
+  };
+  updateEntity('contacts', id ? {id, ...data} : data);
+};
+
+
+/* ==================== CASE MANAGEMENT (Point 7) ==================== */
+window.openCaseModal = (id=null, contactId=null) => {
+    const c = id ? state.cases.find(x=>x.id===id) : {};
+    const con = contactId ? state.contacts.find(x=>x.id===contactId) : state.contacts.find(x=>x.id===c.contactId);
+    
+    // Options for Contact lookup
+    const contactOptions = state.contacts
+        .map(cont => `<option value="${cont.id}" ${cont.id === (c.contactId || contactId) ? 'selected' : ''}>${cont.firstName} ${cont.lastName} (${state.companies.find(comp=>comp.id===cont.companyId)?.name||'N/A'})</option>`)
+        .join('');
+
+    const html = `
+        <form onsubmit="event.preventDefault(); saveCase(this, '${id||''}');" class="space-y-4">
+            <h3 class="font-bold text-lg border-b pb-2">Case Details</h3>
+            <input type="text" name="subject" placeholder="Case Subject/Title (Required)" value="${c.subject||''}" required class="w-full p-2 border rounded">
+            <select name="contactId" class="w-full p-2 border rounded">
+                <option value="">-- Select Contact/Customer (Required) --</option>
+                ${contactOptions}
+            </select>
+            <div class="grid grid-cols-2 gap-4">
+                <select name="type" class="p-2 border rounded">
+                    ${['Question','Defect','RMA','Billing','Other'].map(t => `<option value="${t}" ${c.type===t?'selected':''}>${t}</option>`).join('')}
+                </select>
+                <select name="priority" class="p-2 border rounded">
+                    ${['Low','Medium','High','Critical'].map(p => `<option value="${p}" ${c.priority===p?'selected':''}>${p}</option>`).join('')}
+                </select>
+            </div>
+            
+            <h3 class="font-bold text-lg border-b pb-2 mt-4">Status & Agent</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <select name="status" class="p-2 border rounded">
+                    ${['Open','In Progress','Waiting on Customer','Resolved','Closed'].map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+                <input type="text" name="agentId" placeholder="Assigned Agent ID" value="${c.agentId||'JT101'}" required class="p-2 border rounded">
+            </div>
+            
+            <textarea name="description" placeholder="Detailed Description / Internal Notes" class="w-full p-2 border rounded" rows="4">${c.description||''}</textarea>
+            
+            <div class="p-3 bg-yellow-50 rounded">
+                <h4 class="font-semibold text-sm mb-1">Follow-up Scheduling</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" name="followUpDate" class="p-2 border rounded" value="${c.followUpDate||''}">
+                    <select name="followUpType" class="p-2 border rounded">
+                        <option value="">-- Follow Up Type --</option>
+                        <option value="Task" ${c.followUpType==='Task'?'selected':''}>To-Do/Task</option>
+                        <option value="Appointment" ${c.followUpType==='Appointment'?'selected':''}>Appointment</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded">Save Case</button>
+                ${id ? `<button type="button" onclick="if(confirm('Delete Case ${c.id.slice(0,4)}?')) deleteEntity('cases','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+                <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+            </div>
+        </form>`;
+    openUniversalModal(id ? 'Edit Case: ' + c.subject : 'New Case', html);
+};
+
+window.saveCase = (f, id) => {
+    if (!f.contactId.value || !f.subject.value) return alert('Subject and Contact are required.');
+
+    const data = {
+        id: id || uuid(),
+        subject: f.subject.value,
+        contactId: f.contactId.value,
+        type: f.type.value,
+        priority: f.priority.value,
+        status: f.status.value,
+        agentId: f.agentId.value,
+        description: f.description.value,
+        timeOpened: id ? state.cases.find(x=>x.id===id).timeOpened : new Date().toISOString(),
+        timeClosed: f.status.value === 'Resolved' || f.status.value === 'Closed' ? new Date().toISOString() : null,
+        followUpDate: f.followUpDate.value,
+        followUpType: f.followUpType.value,
+    };
+    
+    // Add logic to automatically create a Task/Appointment if follow-up is set
+    if (data.followUpDate && data.followUpType) {
+        const contact = state.contacts.find(c => c.id === data.contactId);
+        const contactName = contact ? `${contact.firstName} ${contact.lastName}` : 'Customer';
+        const fuTitle = `Follow-up Case ${data.id.slice(0, 4)}: ${data.subject} for ${contactName}`;
+
+        if (data.followUpType === 'Task') {
+            updateEntity('tasks', {
+                title: fuTitle,
+                dueDate: data.followUpDate,
+                time: 'All Day', 
+                priority: 'Medium',
+                status: 'Open',
+                relatedType: 'Case',
+                relatedId: data.id
+            });
+        } else if (data.followUpType === 'Appointment') {
+            // Prompts for time when scheduling an appointment
+            window.openScheduleModal(`${data.followUpDate}T09:00`); 
+        }
+    }
+
+    updateEntity('cases', data);
+    closeUniversalModal();
+};
+
+/* ==================== FULL ORDER FORM (Point 5) ==================== */
+// Order helpers are defined first as they are used by the form rendering
+const updateCustomerInfo = () => {
+    const info = document.getElementById('cust-info');
+    if (selectedCustomer) {
+        const co = state.companies.find(c=>c.id===selectedCustomer.companyId);
+        info.innerHTML = `<p><strong>${selectedCustomer.firstName} ${selectedCustomer.lastName}</strong> – ${selectedCustomer.email} (${selectedCustomer.phone})<br>${co?.name||'N/A'}</p>`;
+        if(document.getElementById('ship-name')) document.getElementById('ship-name').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+    } else info.innerHTML = '<p class="text-gray-500">Select a customer</p>';
+};
+const searchCust = q => {
+    const res = document.getElementById('cust-results');
+    if (!q.trim()) { res.innerHTML=''; return; }
+    const matches = state.contacts.filter(c=>
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q.toLowerCase()) ||
+        c.email.toLowerCase().includes(q.toLowerCase()) ||
+        c.phone.includes(q)
+    ).slice(0,5);
+    res.innerHTML = matches.map(c=>`<div class="p-2 search-result" onclick="selectCust('${c.id}')">${c.firstName} ${c.lastName} – ${c.email}</div>`).join('');
+};
+window.selectCust = id => {
+    selectedCustomer = state.contacts.find(c=>c.id===id);
+    document.getElementById('cust-search').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+    document.getElementById('cust-results').innerHTML = '';
+    updateCustomerInfo();
+};
+const searchProd = q => {
+    const res = document.getElementById('prod-results');
+    if (!q.trim()) { res.classList.add('hidden'); return; }
+    const matches = state.inventory.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.id.includes(q));
+    res.innerHTML = matches.map(p=>`<div class="p-2 search-result" onclick="addToCart('${p.id}')">${p.name} – $${p.unitPrice}</div>`).join('');
+    res.classList.remove('hidden');
+};
+window.addToCart = id => {
+    const p = state.inventory.find(x=>x.id===id);
+    // Ensure default variants are selected if available
+    const variant = {};
+    if (p.variants.size && p.variants.size.length > 0) variant.size = p.variants.size[0];
+    if (p.variants.color && p.variants.color.length > 0) variant.color = p.variants.color[0];
+
+    currentCart.push({productId:id,qty:1,variant:variant,custom:''});
+    document.getElementById('prod-search').value='';
+    document.getElementById('prod-results').classList.add('hidden');
+    updateCartDisplay();
+    calcTotals();
+};
+const updateCartDisplay = () => {
+    const c = document.getElementById('cart-items');
+    c.innerHTML = currentCart.map((it,i)=>{
+        const p = state.inventory.find(x=>x.id===it.productId);
+        if (!p) return ''; // Skip if product not found
+
+        // Helper to generate select options
+        const variantSelect = (key, currentVal, options) => {
+            if (!options || options.length === 0) return '';
+            return `<select onchange="updVariant(${i},'${key}',this.value); calcTotals();" class="text-xs p-1 border rounded">
+                ${options.map(s=>`<option value="${s}" ${currentVal===s?'selected':''}>${s}</option>`).join('')}
+            </select>`;
+        };
+        
+        // Set default variants if not already set (important for dynamic updates)
+        if (!it.variant.size && p.variants.size && p.variants.size.length > 0) it.variant.size = p.variants.size[0];
+        if (!it.variant.color && p.variants.color && p.variants.color.length > 0) it.variant.color = p.variants.color[0];
+
+        return `<div class="p-3 bg-white border rounded flex items-center justify-between">
+            <div class="flex-1">
+                <p class="font-medium">${p.name} (${p.id})</p>
+                <div class="flex gap-2 mt-1">
+                    ${variantSelect('size', it.variant.size, p.variants.size)}
+                    ${variantSelect('color', it.variant.color, p.variants.color)}
+                    <input type="text" placeholder="Custom Text (e.g. Name)" value="${it.custom||''}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
+                </div>
+            </div>
+            <input type="number" min="1" value="${it.qty}" onchange="updQty(${i},this.value)" class="w-16 p-1 border rounded mx-2">
+            <span class="font-semibold">${formatCurrency(p.unitPrice*it.qty)}</span>
+            <button onclick="remItem(${i})" class="text-red-600 ml-2">×</button>
+        </div>`;
+    }).join('')||'<p class="text-gray-500">Cart empty</p>';
+};
+window.updVariant = (i,k,v) => { currentCart[i].variant[k]=v; };
+window.updCustom = (i,v) => { currentCart[i].custom=v; };
+window.updQty = (i,q) => { currentCart[i].qty=parseInt(q)||1; updateCartDisplay(); calcTotals(); };
+window.remItem = i => { currentCart.splice(i,1); updateCartDisplay(); calcTotals(); };
+
+const calcTotals = () => {
+    const sub = currentCart.reduce((s,it)=>s+(state.inventory.find(p=>p.id===it.productId)?.unitPrice||0)*it.qty,0);
+    const ship = parseFloat(document.getElementById('ship-method')?.value)||0;
+    const gift = document.getElementById('gift-wrap')?.checked?5:0;
+    const tax = sub*0.08;
+    const total = sub + ship + gift + tax;
+    
+    if (document.getElementById('subtotal')) document.getElementById('subtotal').textContent = formatCurrency(sub);
+    if (document.getElementById('shipping-cost')) document.getElementById('shipping-cost').textContent = formatCurrency(ship);
+    if (document.getElementById('tax-cost')) document.getElementById('tax-cost').textContent = formatCurrency(tax);
+    if (document.getElementById('grand-total')) document.getElementById('grand-total').textContent = formatCurrency(total);
+};
+window.calcTotals = calcTotals; // Expose to window for onchange events
+window.applyDiscount = () => alert('Discount logic is not yet implemented!');
+
+
+window.openOrderEntryModal = (id=null) => {
+    const o = id ? state.orders.find(x=>x.id===id) : {};
+    currentCart = o.lines || [];
+    selectedCustomer = state.contacts.find(c=>c.id===o.contactId) || null;
+    
+    // Attempt to pre-fill shipping from saved order or selected customer's company info
+    const shipAddr = o.shippingAddress || (selectedCustomer ? state.companies.find(c => c.id === selectedCustomer.companyId) : {});
+    
+    let html = `
+        <form onsubmit="event.preventDefault(); saveOrder(this, '${id||''}');" class="space-y-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">1. Customer & Account Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Search (Name/Email/Phone)</label>
+                        <input type="text" id="cust-search" placeholder="Type…" class="w-full p-2 border rounded mt-1" oninput="searchCust(this.value)">
+                        <div id="cust-results" class="search-results mt-1"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Order Source</label>
+                        <select id="order-source" class="w-full p-2 border rounded mt-1">
+                            <option value="Ecommerce" ${o.source==='Ecommerce'?'selected':''}>E-commerce Site</option>
+                            <option value="Phone" ${o.source==='Phone'?'selected':''}>Phone Order (MOTO)</option>
+                            <option value="Internal" ${o.source==='Internal'?'selected':''}>Internal Test</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="cust-info" class="mt-3 p-3 bg-blue-50 rounded"></div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">2. Product & Cart Details</h3>
+                <div class="relative mb-3">
+                    <input type="text" id="prod-search" placeholder="Search SKU/Name…" class="w-full p-2 border rounded" oninput="searchProd(this.value)">
+                    <div id="prod-results" class="absolute z-10 bg-white border w-full mt-1 max-h-48 overflow-y-auto hidden"></div>
+                </div>
+                <div id="cart-items" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
+                <div class="flex justify-between font-semibold"><span>Subtotal:</span><span id="subtotal">$0.00</span></div>
+                <div class="flex justify-between font-semibold"><span>Shipping:</span><span id="shipping-cost">$0.00</span></div>
+                <div class="flex justify-between font-semibold"><span>Tax (8%):</span><span id="tax-cost">$0.00</span></div>
+                
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="discount" placeholder="Discount Code" class="flex-1 p-2 border rounded">
+                    <button type="button" onclick="applyDiscount()" class="px-3 py-1 bg-yellow-600 text-white rounded">Apply</button>
+                </div>
+                <div class="flex items-center gap-4 mt-2">
+                    <label><input type="checkbox" id="gift-wrap" onchange="calcTotals()" ${o.giftWrap>0?'checked':''}> Gift Wrap (+$5)</label>
+                    <input type="text" id="gift-msg" placeholder="Gift Message" value="${o.giftMessage||''}" class="flex-1 p-2 border rounded">
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">3. Shipping & Fulfillment</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <input type="text" id="ship-name" placeholder="Recipient Name" required class="p-2 border rounded" value="${o.shippingAddress?.name || ''}">
+                    <input type="text" id="ship-line1" placeholder="Street Address" required class="p-2 border rounded" value="${o.shippingAddress?.line1 || shipAddr?.address || ''}">
+                    <input type="text" id="ship-city" placeholder="City" required class="p-2 border rounded" value="${o.shippingAddress?.city || shipAddr?.city || ''}">
+                    <input type="text" id="ship-state" placeholder="State" required class="p-2 border rounded" value="${o.shippingAddress?.state || shipAddr?.state || ''}">
+                    <input type="text" id="ship-zip" placeholder="Zip" required class="p-2 border rounded" value="${o.shippingAddress?.zip || shipAddr?.zip || ''}">
+                    <input type="text" id="ship-country" placeholder="Country" value="${o.shippingAddress?.country || 'USA'}" required class="p-2 border rounded">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium">Shipping Method</label>
+                    <select id="ship-method" class="w-full p-2 border rounded" onchange="calcTotals()">
+                        <option value="5.99" ${o.shipping===5.99?'selected':''}>Standard – $5.99</option>
+                        <option value="12.99" ${o.shipping===12.99?'selected':''}>Expedited – $12.99</option>
+                        <option value="29.99" ${o.shipping===29.99?'selected':''}>Next Day – $29.99</option>
+                    </select>
+                </div>
+                <textarea id="fulfill-notes" placeholder="Internal notes…" class="w-full p-2 border rounded" rows="2">${o.notes||''}</textarea>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">4. Payment & Finalization</h3>
+                <input type="text" id="card-number" placeholder="Credit Card Number (Demo Only)" class="w-full p-2 border rounded mb-3" value="${o.payment?.cardNumber || ''}">
+                <div class="grid grid-cols-3 gap-4 mb-3">
+                    <input type="text" id="card-expiry" placeholder="MM/YY" class="p-2 border rounded" value="${o.payment?.expiry || ''}">
+                    <input type="text" id="card-cvv" placeholder="CVV" class="p-2 border rounded" value="${o.payment?.cvv || ''}">
+                    <select id="pay-method" class="p-2 border rounded">
+                        <option ${o.payment?.method==='Credit Card'?'selected':''}>Credit Card</option><option ${o.payment?.method==='Debit Card'?'selected':''}>Debit Card</option><option ${o.payment?.method==='Gift Card'?'selected':''}>Gift Card</option>
+                    </select>
+                </div>
+
+                <div class="mt-3 p-3 bg-red-100 border border-red-300 rounded">
+                    <p class="text-sm font-bold text-red-700">PCI Warning: Do NOT enter or save real card data in this demo application.</p>
+                </div>
+                
+                <div class="flex justify-between font-bold text-xl mt-3">
+                    <span>Total Charged:</span><span id="grand-total">$0.00</span>
+                </div>
+                <label class="flex items-center mt-3">
+                    <input type="checkbox" id="terms" required class="mr-2" ${id?'checked':''}>
+                    I confirm terms and processed payment
+                </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium">Place / Save Order</button>
+                <button type="button" onclick="closeUniversalModal()" class="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>
+            </div>
+        </form>`;
+    openUniversalModal(id?'Edit Order: #'+o.id.slice(0,6):'New Order',html);
+    updateCustomerInfo();
+    updateCartDisplay();
+    calcTotals();
+};
+
+window.saveOrder = (f, id) => {
+    if (!document.getElementById('terms').checked) return alert('Accept T&Cs');
+    if (!selectedCustomer) return alert('Select a customer for this order.');
+    
+    calcTotals(); 
+
+    const o = {
+        id: id || uuid(),
+        customerId: selectedCustomer?.companyId,
+        contactId: selectedCustomer?.id,
+        source: f.querySelector('#order-source').value,
+        lines: currentCart,
+        subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(/[$,]/g,'')),
+        shipping: parseFloat(document.getElementById('ship-method').value),
+        tax: parseFloat(document.getElementById('tax-cost').textContent.replace(/[$,]/g,'')),
+        giftWrap: document.getElementById('gift-wrap').checked?5:0,
+        giftMessage: f.querySelector('#gift-msg').value,
+        total: parseFloat(document.getElementById('grand-total').textContent.replace(/[$,]/g,'')),
+        status: id ? state.orders.find(x=>x.id===id).status : 'Pending',
+        orderDate: id ? state.orders.find(x=>x.id===id).orderDate : new Date().toISOString(),
+        shippingAddress: {
+            name: f.querySelector('#ship-name').value,
+            line1: f.querySelector('#ship-line1').value,
+            city: f.querySelector('#ship-city').value,
+            state: f.querySelector('#ship-state').value,
+            zip: f.querySelector('#ship-zip').value,
+            country: f.querySelector('#ship-country').value
+        },
+        payment: {
+            method: f.querySelector('#pay-method').value,
+            cardNumber: f.querySelector('#card-number').value, 
+            expiry: f.querySelector('#card-expiry').value, 
+            cvv: f.querySelector('#card-cvv').value, 
+        },
+        notes: f.querySelector('#fulfill-notes').value
+    };
+    
+    // Inventory Update Logic (Basic)
+    if (!id) { // Only update inventory for new orders
+        o.lines.forEach(line => {
+            const item = state.inventory.find(inv => inv.id === line.productId);
+            if (item) {
+                item.availableQty -= line.qty;
+            }
+        });
+    }
+
+    updateEntity('orders', o);
+    closeUniversalModal();
+};
+
+
+/* ==================== OTHER RENDERS (Point 1, 3, 4, 7) ==================== */
+// Point 1: Dashboard 
+const renderDashboard = () => {
+  const cust = state.companies.filter(c=>c.status==='Customer').length;
+  const openT = state.tasks.filter(t=>t.status!=='Complete').length;
+  const rev = state.orders.reduce((s,o)=>s+o.total,0);
+  const openC = state.cases.filter(c=>c.status!=='Closed'&&c.status!=='Resolved').length;
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600"><p class="text-sm text-gray-500">Customers</p><h3 class="text-3xl font-bold text-blue-600">${cust}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600"><p class="text-sm text-gray-500">Revenue</p><h3 class="text-3xl font-bold text-green-600">${formatCurrency(rev)}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500"><p class="text-sm text-gray-500">Open Tasks</p><h3 class="text-3xl font-bold text-yellow-500">${openT}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600"><p class="text-sm text-gray-500">Open Cases</p><h3 class="text-3xl font-bold text-red-600">${openC}</h3></div>`;
+  const ov = state.tasks.filter(t=>isOverdue(t.dueDate,t.status));
+  document.getElementById('overdue-tasks-list').innerHTML = ov.map(t=>`<li class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between">
+    <div><p class="font-medium text-red-700">${t.title}</p><p class="text-sm text-red-500">Due: ${formatDate(t.dueDate)}</p></div>
+    <button onclick="openTaskModal('${t.id}')" class="text-red-700 hover:text-red-900 text-sm font-medium">Edit</button></li>`).join('')||'<p class="text-gray-500">No overdue tasks.</p>';
+};
+
+// Points 2 & 3: Renders
+const renderCompanies = (custOnly=false) => {
+  const cont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
+  if (!cont) return;
+  
+  if (custOnly) {
+      document.getElementById('customers').innerHTML = `
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Active Customers</h2>
+          <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add New Customer/Contact</button>
+          <div id="customer-list" class="space-y-3"></div>`;
+  }
+  
+  let list = state.companies;
+  if (custOnly) list = list.filter(c=>c.status==='Customer');
+  const sorted = [...list].sort((a,b)=>a.name.localeCompare(b.name));
+  
+  const actualCont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
+
+  actualCont.innerHTML = sorted.map(c=>`
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.name}
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${c.status==='Customer'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-700'}">${c.status}</span>
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-yellow-100 text-yellow-700">${c.customerTier||'None'}</span></p>
+      <p class="text-sm text-gray-500">Owner: ${c.owner||'N/A'} | Revenue: ${formatCurrency(c.revenue)} | Industry: ${c.industry||'N/A'}</p></div>
+      <button onclick="openCompanyModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+    </div>`).join('')||'<p class="p-4 bg-white rounded-lg">No records.</p>';
+};
+
+// Point 4: Contacts Render
+const renderContacts = () => {
+  const cont = document.getElementById('contact-list');
+  if (!cont) return;
+  const sorted = [...state.contacts].sort((a,b)=>a.lastName.localeCompare(b.lastName));
+  
+  const contactsTab = document.getElementById('contacts');
+  if (!contactsTab.querySelector('button[onclick="openContactModal()"]')) {
+     contactsTab.innerHTML = `
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">All Contacts</h2>
+          <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add Contact</button>
+          <div id="contact-list" class="space-y-3"></div>`;
+  }
+
+  cont.innerHTML = sorted.map(c=>{
+    const comp = state.companies.find(x=>x.id===c.companyId)?.name||'Unassigned';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm text-gray-600">(${c.jobTitle||'N/A'})</span></p>
+           <p class="text-sm text-gray-500">Company: ${comp} | Mobile: ${c.mobile||'N/A'} | Email: ${c.email}</p>
+           ${c.pickleballClub?`<p class="text-xs font-medium text-purple-600 mt-1">Pickleball Club: ${c.pickleballClub}</p>`:''}</div>
+      <div class="flex space-x-2">
+        <button onclick="openCaseModal(null,'${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
+        <button onclick="openContactModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+      </div>
+    </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No contacts.</p>';
+};
+
+// Point 5: Orders Render
+const renderOrderList = () => {
+  const cont = document.getElementById('order-list');
+  if (!cont) return;
+  if (state.orders.length === 0) {
+    cont.innerHTML = '<p class="p-4 bg-white rounded-lg">No orders yet.</p>'; return;
+  }
+  const sorted = [...state.orders].sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
+  cont.innerHTML = sorted.map(o=>{
+    const cust = state.companies.find(c=>c.id===o.customerId);
+    const statusCol = o.status==='Delivered'?'bg-green-100 text-green-700':o.status==='Shipped'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">#${o.id.slice(0,6)} – ${cust?.name||'N/A'} (${o.source})</p>
+             <p class="text-sm text-gray-500">Date: ${formatDate(o.orderDate)} | Total: ${formatCurrency(o.total)} | Shipping: ${o.shippingAddress.city}, ${o.shippingAddress.state}</p></div>
+      <div class="flex space-x-2">
+        <span class="px-3 py-1 rounded-full text-xs font-medium ${statusCol}">${o.status}</span>
+        <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// Point 6: Task Render
+const renderTaskList = () => {
+  const cont = document.getElementById('task-list-container');
+  if (!cont) return;
+  const sorted = [...state.tasks].sort((a,b)=>{
+    const p = {High:3,Medium:2,Low:1};
+    const oa = isOverdue(a.dueDate,a.status)?1:0, ob = isOverdue(b.dueDate,b.status)?1:0;
+    if(oa!==ob) return ob-oa;
+    if(p[b.priority]!==p[a.priority]) return p[b.priority]-p[a.priority];
+    return new Date(a.dueDate)-new Date(b.dueDate);
+  });
+  cont.innerHTML = sorted.map(t=>{
+    const ov = isOverdue(t.dueDate,t.status);
+    const col = t.status==='Complete'?'border-green-500':ov?'border-red-500':t.priority==='High'?'border-yellow-500':'border-blue-500';
+    const bg = t.status==='Complete'?'bg-green-50':ov?'bg-red-50':'bg-white';
+    return `<div class="${bg} p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+               <div><p class="text-lg font-semibold text-gray-800">${t.title} <span class="text-sm text-gray-600">(${t.status})</span></p>
+                    <p class="text-sm text-gray-500">Due: <strong>${formatDate(t.dueDate)}</strong> ${t.time && t.time !== 'All Day' ? `at ${t.time}` : '(All Day)'} | Priority: ${t.priority}</p></div>
+               <div class="flex space-x-3">
+                 <select onchange="updateTaskStatus('${t.id}',this.value)" class="p-2 border rounded-lg text-sm bg-white">
+                   ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+                 </select>
+                 <button onclick="openTaskModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+               </div>
+             </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No tasks.</p>';
+};
+window.updateTaskStatus = (id,s) => updateEntity('tasks',{id,status:s});
+
+// Point 7: Case Render
+const renderCaseList = () => {
+    const cont = document.getElementById('case-list-container');
+    if (!cont) return;
+    const sorted = [...state.cases].sort((a,b)=> ({Critical:4,High:3,Medium:2,Low:1}[b.priority] - {Critical:4,High:3,Medium:2,Low:1}[a.priority]) );
+    cont.innerHTML = sorted.map(c=>{
+        const con = state.contacts.find(x=>x.id===c.contactId);
+        const col = c.status==='Resolved'||c.status==='Closed'?'border-green-500':c.priority==='Critical'?'border-red-600':c.status==='Open'?'border-red-500':'border-yellow-500';
+        return `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+                <div><p class="text-lg font-semibold text-gray-800">${c.subject} <span class="text-xs font-medium text-gray-500">(${c.type})</span></p>
+                        <p class="text-sm text-gray-500">Customer: ${con?con.firstName+' '+con.lastName:'N/A'} | Agent: ${c.agentId}</p>
+                        <p class="text-xs text-gray-500">Opened: ${formatDateTime(c.timeOpened)} | Priority: <strong>${c.priority}</strong></p></div>
+                <div class="flex space-x-3">
+                    <span class="text-sm font-medium px-3 py-1 rounded-full ${c.status==='Open'?'bg-red-500':'bg-blue-500'} text-white">${c.status}</span>
+                    <button onclick="openCaseModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                </div>
+                </div>`;
+    }).join('')||'<p class="p-4 bg-white rounded-lg">No cases.</p>';
+};
+
+const renderReports = () => { 
+  const output = document.getElementById('report-output');
+  output.innerHTML = `<h3 class="text-xl font-semibold mb-4">${activeReportType.toUpperCase()} Report</h3><p>Report generation logic for ${activeReportType} is a placeholder.</p>`;
+};
+window.setReportType = (type) => {
+  activeReportType = type;
+  document.querySelectorAll('.report-btn').forEach(btn => {
+    if (btn.textContent.toLowerCase().includes(type)) {
+      btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+    } else {
+      btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+      btn.classList.remove('bg-blue-600', 'text-white');
+    }
+  });
+  renderReports();
+};
+
+
+/* ==================== EXPORT & INIT ==================== */
+window.exportData = () => {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='acoustiskin_crm.json'; a.click();
+  URL.revokeObjectURL(url);
+};
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  renderActiveTab();
+});
+</script>
+</body>
+</html>

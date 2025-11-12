@@ -175,17 +175,17 @@ const isOverdue = (due,status) => status!=='Complete' && new Date(due)<new Date(
 
 /* ==================== STORAGE ==================== */
 const loadState = () => {
-  Object.keys(STORAGE_KEYS).forEach(k=>{
+  Object.keys(STORAGE_KEYS).forEach(k => {
     const s = localStorage.getItem(STORAGE_KEYS[k]);
-    if(s){ try{ state[k]=JSON.parse(s); }catch(e){ console.error('Corrupt',k); } }
-    else if(k==='inventory') state[k]=[
+    if (s) try { state[k] = JSON.parse(s); } catch (e) { console.error('Corrupt',k); }
+    else if (k === 'inventory') state[k] = [
       {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99,variants:{size:['S','M','L','XL'],color:['Black','Blue']}},
       {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99,variants:{size:['M','L'],color:['White']}}
     ];
-    else state[k]=[];
+    else state[k] = [];
   });
-  if(state.companies.length===0){
-    const cid=uuid(), pid=uuid();
+  if (state.companies.length === 0) {
+    const cid = uuid(), pid = uuid();
     state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin'});
     state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001'});
     state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid});
@@ -193,10 +193,10 @@ const loadState = () => {
   }
   saveState();
 };
-const saveState = () => Object.keys(STORAGE_KEYS).forEach(k=>localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(state[k])));
+const saveState = () => Object.keys(STORAGE_KEYS).forEach(k => localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(state[k])));
 const updateEntity = (ent,data) => {
-  const idx = state[ent].findIndex(i=>i.id===data.id);
-  if(idx>-1) state[ent][idx]={...state[ent][idx],...data};
+  const idx = state[ent].findIndex(i => i.id === data.id);
+  if (idx > -1) state[ent][idx] = {...state[ent][idx],...data};
   else state[ent].push({id:uuid(),createdAt:new Date().toISOString(),...data});
   saveState(); renderActiveTab();
 };
@@ -206,7 +206,7 @@ const renderActiveTab = () => {
   const activeLink = document.querySelector('.nav-link.active');
   if (!activeLink) return;
   const tab = activeLink.dataset.tab;
-  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
   const el = document.getElementById(tab);
   if (el) el.classList.add('active');
 
@@ -225,10 +225,10 @@ const renderActiveTab = () => {
 };
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
-  document.querySelectorAll('.nav-link').forEach(l=>{
-    l.addEventListener('click', e=>{
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.addEventListener('click', e => {
       e.preventDefault();
-      document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
       l.classList.add('active');
       renderActiveTab();
     });
@@ -248,73 +248,7 @@ const closeUniversalModal = () => {
 };
 window.closeUniversalModal = closeUniversalModal;
 
-/* ==================== REPORTS ==================== */
-window.setReportType = t => {
-  activeReportType = t;
-  document.querySelectorAll('#report-buttons .report-btn').forEach(b=>{
-    b.classList.remove('bg-blue-600','text-white');
-    b.classList.add('bg-gray-200','hover:bg-gray-300');
-  });
-  const btn = document.querySelector(`#report-buttons button[onclick="setReportType('${t}')"]`);
-  if (btn) {
-    btn.classList.add('bg-blue-600','text-white');
-    btn.classList.remove('bg-gray-200','hover:bg-gray-300');
-  }
-  renderReports();
-};
-const renderReports = () => {
-  const out = document.getElementById('report-output');
-  let html = '';
-  if (activeReportType === 'tasks') html = renderTaskReport();
-  else if (activeReportType === 'sales') html = renderSalesReports();
-  else if (activeReportType === 'inventory') html = renderInventoryReport();
-  else if (activeReportType === 'pickleball') html = renderPickleballReport();
-  out.innerHTML = html;
-};
-const renderTaskReport = () => {
-  const total = state.tasks.length;
-  const completed = state.tasks.filter(t=>t.status==='Complete').length;
-  const overdue = state.tasks.filter(t=>isOverdue(t.dueDate,t.status)).length;
-  return `<h4 class="text-xl font-bold mb-4">Task Productivity Summary</h4>
-          <table class="w-full text-left table-auto"><thead class="bg-gray-100"><tr><th class="p-3">Metric</th><th class="p-3">Value</th></tr></thead>
-          <tbody><tr><td class="p-3 border-t">Total Tasks</td><td class="p-3 border-t">${total}</td></tr>
-          <tr><td class="p-3 border-t">Completed</td><td class="p-3 border-t font-bold text-green-600">${completed}</td></tr>
-          <tr><td class="p-3 border-t">Overdue</td><td class="p-3 border-t font-bold text-red-600">${overdue}</td></tr></tbody></table>`;
-};
-const renderSalesReports = () => {
-  const calc = p => {
-    const now = new Date(), start = new Date(now);
-    if(p==='daily') start.setHours(0,0,0,0);
-    else if(p==='weekly'){ start.setDate(now.getDate()-now.getDay()); start.setHours(0,0,0,0); }
-    else if(p==='monthly'){ start.setDate(1); start.setHours(0,0,0,0); }
-    return state.orders.filter(o=>new Date(o.orderDate)>=start && o.status==='Delivered')
-                      .reduce((s,o)=>s+o.total,0);
-  };
-  return `<h4 class="text-xl font-bold mb-4">Delivered Sales Volume</h4>
-          <div class="grid grid-cols-3 gap-4">
-            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">Today</p><p class="text-2xl font-bold">${formatCurrency(calc('daily'))}</p></div>
-            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">This Week</p><p class="text-2xl font-bold">${formatCurrency(calc('weekly'))}</p></div>
-            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">This Month</p><p class="text-2xl font-bold">${formatCurrency(calc('monthly'))}</p></div>
-          </div>`;
-};
-const renderInventoryReport = () => `
-  <h4 class="text-xl font-bold mb-4">Inventory Status</h4>
-  <ul class="space-y-2">${state.inventory.map(p=>`
-    <li class="flex justify-between p-3 border rounded-lg ${p.availableQty<=10?'bg-red-100 text-red-700':'bg-gray-50'}">
-      <span>${p.name} (${p.id})</span>
-      <span:font-bold">Available: ${p.availableQty}</span>
-    </li>`).join('')}</ul>`;
-const renderPickleballReport = () => {
-  const clubs = state.contacts.reduce((a,c)=>{ const k=c.pickleballClub||'Unaffiliated'; a[k]=(a[k]||0)+1; return a; },{});
-  const total = state.contacts.length;
-  return `<h4 class="text-xl font-bold mb-4">Pickleball Club Segmentation</h4>
-          <table class="w-full text-left table-auto"><thead class="bg-gray-100"><tr><th class="p-3">Club</th><th class="p-3">Count</th><th class="p-3">% of Contacts</th></tr></thead>
-          <tbody>${Object.entries(clubs).map(([k,v])=>`
-            <tr><td class="p-3 border-t">${k}</td><td class="p-3 border-t">${v}</td>
-                <td class="p-3 border-t">${total?((v/total)*100).toFixed(1):0}%</td></tr>`).join('')}</tbody></table>`;
-};
-
-/* ==================== CALENDAR ==================== */
+/* ==================== CALENDAR (FIXED) ==================== */
 window.changeCalendarDate = delta => {
   if (calendarViewMode === 'daily') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
   else if (calendarViewMode === 'weekly') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
@@ -357,7 +291,8 @@ const renderDaily = c => {
   const ds = currentCalendarDate.toISOString().slice(0,10);
   const appts = state.appointments.filter(a=>a.date.startsWith(ds));
   let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Daily – ${currentCalendarDate.toLocaleDateString()}</h3>
-              <button onclick="openScheduleModal('${ds}T09:00')" class="px-3 py-1 bg-green-600 text-white rounded-lg mb-4">+ Add</button>
+              <button onclick="openScheduleModal('${ds}T09:00')" class="px-3 py-1 bg-green-600 text-white rounded-lg mb-4">+ Appointment</button>
+              <button onclick="openTaskModal(null,'${ds}')" class="px-3 py-1 bg-blue-600 text-white rounded-lg mb-4 ml-2">+ To-Do</button>
               <table class="w-full text-left border-collapse">`;
   for(let h=6;h<=20;h++){
     const slot = `${ds}T${String(h).padStart(2,'0')}:00`;
@@ -380,9 +315,12 @@ const renderWeekly = c => {
     const day = new Date(start); day.setDate(start.getDate()+i);
     const ds = day.toISOString().slice(0,10);
     const appts = state.appointments.filter(a=>a.date.startsWith(ds));
-    html += `<div class="cal-day" onclick="openScheduleModal('${ds}T09:00')">
+    const isToday = day.toDateString() === new Date().toDateString();
+    html += `<div class="cal-day ${isToday?'today':''}">
                <strong>${day.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</strong>
-               ${appts.map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')||'<small>Click to add</small>'}
+               <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600">+ Appt</button>
+               <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 ml-1">+ To-Do</button>
+               ${appts.map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')||''}
              </div>`;
   }
   html += `</div></div>`;
@@ -403,10 +341,12 @@ const renderMonthly = c => {
     const date = new Date(year, month, d);
     const ds = date.toISOString().slice(0,10);
     const appts = state.appointments.filter(a=>a.date.startsWith(ds));
-    const today = date.toDateString()===new Date().toDateString();
-    html += `<div class="cal-day ${today?'today':''}" onclick="openScheduleModal('${ds}T09:00')">
+    const isToday = date.toDateString() === new Date().toDateString();
+    html += `<div class="cal-day ${isToday?'today':''}">
                <strong>${d}</strong>
-               ${appts.slice(0,3).map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')||'<small>Click to add</small>'}
+               <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600 block w-full">+ Appt</button>
+               <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 block w-full">+ To-Do</button>
+               ${appts.slice(0,2).map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')}
              </div>`;
   }
   html += `</div></div>`;
@@ -420,8 +360,32 @@ window.openScheduleModal = d => {
   const note = prompt('Notes:',ex?ex.note:'')||'';
   updateEntity('appointments',{id:ex?ex.id:uuid(),date:d,title,note});
 };
+window.openTaskModal = (id=null, date=null) => {
+  const t = id ? state.tasks.find(x=>x.id===id) : {};
+  const html = `
+    <form onsubmit="event.preventDefault(); saveTask(this, '${id||''}');">
+      <input type="text" placeholder="Task Title" value="${t.title||''}" required class="w-full p-2 border rounded mb-3">
+      <input type="date" value="${date||t.dueDate||''}" required class="w-full p-2 border rounded mb-3">
+      <select class="w-full p-2 border rounded mb-3">
+        <option ${t.priority==='High'?'selected':''}>High</option>
+        <option ${t.priority==='Medium'?'selected':''}>Medium</option>
+        <option ${t.priority==='Low'?'selected':''}>Low</option>
+      </select>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id?'Edit Task':'New Task',html);
+};
+window.saveTask = (f,id) => {
+  const i = f.querySelectorAll('input,select');
+  const data = {title:i[0].value,dueDate:i[1].value,priority:i[2].value,status:id?state.tasks.find(x=>x.id===id).status:'Open'};
+  updateEntity('tasks', id?{id,...data}:{...data});
+  closeUniversalModal();
+};
 
-/* ==================== ORDER FORM (FULL) ==================== */
+/* ==================== FULL ORDER FORM ==================== */
 window.openOrderEntryModal = (id=null) => {
   const o = id ? state.orders.find(x=>x.id===id) : {};
   currentCart = o.lines || [];
@@ -441,17 +405,11 @@ window.openOrderEntryModal = (id=null) => {
             <label class="block text-sm font-medium">Agent</label>
             <input type="text" value="JT101" readonly class="w-full p-2 border rounded bg-gray-100 mt-1">
           </div>
-          <div>
-            <label class="block text-sm font-medium">Order Source</label>
-            <select class="w-full p-2 border rounded mt-1">
-              <option>Phone Order</option><option>Customer Service</option><option>Walk-in</option>
-            </select>
-          </div>
         </div>
         <div id="cust-info" class="mt-3 p-3 bg-blue-50 rounded"></div>
       </div>
 
-      <!-- 2. Product Details -->
+      <!-- 2. Product -->
       <div class="bg-gray-50 p-4 rounded-lg">
         <h3 class="font-bold text-lg mb-3">2. Product & Order Details</h3>
         <div class="relative mb-3">
@@ -578,7 +536,7 @@ const updateCartDisplay = () => {
             ${p.variants.size.map(s=>`<option ${it.variant.size===s?'selected':''}>${s}</option>`).join('')}
           </select>
           <select onchange="updVariant(${i},'color',this.value)" class="text-xs p-1 border rounded">
-            ${p.variants.color.map(col=>`<option ${it.variant.color=== that col?'selected':''}>${col}</option>`).join('')}
+            ${p.variants.color.map(col=>`<option ${it.variant.color===col?'selected':''}>${col}</option>`).join('')}
           </select>
           <input type="text" placeholder="Name/Number" value="${it.custom}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
         </div>
@@ -602,7 +560,6 @@ const calcTotals = () => {
   document.getElementById('subtotal').textContent = formatCurrency(sub);
   document.getElementById('grand-total').textContent = formatCurrency(total);
 };
-const applyDiscount = () => { /* mock */ calcTotals(); };
 window.saveOrder = () => {
   if (!document.getElementById('terms').checked) return alert('Accept T&Cs');
   const o = {
@@ -631,13 +588,120 @@ window.saveOrder = () => {
   closeUniversalModal();
 };
 
-/* ==================== OTHER LISTS (compact) ==================== */
-const renderDashboard = () => { /* same as before – omitted for brevity */ };
-const renderCompanies = (custOnly) => { /* same */ };
-const renderContacts = () => { /* same */ };
-const renderOrderList = () => { /* same */ };
-const renderTaskList = () => { /* same */ };
-const renderCaseList = () => { /* same */ };
+/* ==================== OTHER RENDERS ==================== */
+const renderDashboard = () => {
+  const cust = state.companies.filter(c=>c.status==='Customer').length;
+  const openT = state.tasks.filter(t=>t.status!=='Complete').length;
+  const rev = state.orders.reduce((s,o)=>s+o.total,0);
+  const openC = state.cases.filter(c=>c.status!=='Closed'&&c.status!=='Resolved').length;
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600"><p class="text-sm text-gray-500">Customers</p><h3 class="text-3xl font-bold text-blue-600">${cust}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600"><p class="text-sm text-gray-500">Revenue</p><h3 class="text-3xl font-bold text-green-600">${formatCurrency(rev)}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500"><p class="text-sm text-gray-500">Open Tasks</p><h3 class="text-3xl font-bold text-yellow-500">${openT}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600"><p class="text-sm text-gray-500">Open Cases</p><h3 class="text-3xl font-bold text-red-600">${openC}</h3></div>`;
+  const ov = state.tasks.filter(t=>isOverdue(t.dueDate,t.status));
+  document.getElementById('overdue-tasks-list').innerHTML = ov.map(t=>`<li class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between">
+    <div><p class="font-medium text-red-700">${t.title}</p><p class="text-sm text-red-500">Due: ${formatDate(t.dueDate)}</p></div>
+    <button onclick="openTaskModal('${t.id}')" class="text-red-700 hover:text-red-900 text-sm font-medium">Edit</button></li>`).join('')||'<p class="text-gray-500">No overdue tasks.</p>';
+};
+const renderCompanies = (custOnly=false) => {
+  const cont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
+  if (!cont) return;
+  let list = state.companies;
+  if (custOnly) list = list.filter(c=>c.status==='Customer');
+  const sorted = [...list].sort((a,b)=>a.name.localeCompare(b.name));
+  cont.innerHTML = sorted.map(c=>`
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.name}
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${c.status==='Customer'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-700'}">${c.status}</span>
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-yellow-100 text-yellow-700">${c.customerTier||'None'}</span></p>
+      <p class="text-sm text-gray-500">Owner: ${c.owner||'N/A'} | Revenue: ${formatCurrency(c.revenue)}</p></div>
+      <button onclick="openCompanyModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+    </div>`).join('')||'<p class="p-4 bg-white rounded-lg">No records.</p>';
+};
+const renderContacts = () => {
+  const cont = document.getElementById('contact-list');
+  if (!cont) return;
+  const sorted = [...state.contacts].sort((a,b)=>a.lastName.localeCompare(b.lastName));
+  cont.innerHTML = sorted.map(c=>{
+    const comp = state.companies.find(x=>x.id===c.companyId)?.name||'Unassigned';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm text-gray-600">(${c.jobTitle||'N/A'})</span></p>
+           <p class="text-sm text-gray-500">Company: ${comp} | Mobile: ${c.mobile||'N/A'}</p>
+           ${c.pickleballClub?`<p class="text-xs font-medium text-purple-600 mt-1">Pickleball Club: ${c.pickleballClub}</p>`:''}</div>
+      <div class="flex space-x-2">
+        <button onclick="openCaseModal(null,'${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
+        <button onclick="openContactModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+      </div>
+    </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No contacts.</p>';
+};
+const renderOrderList = () => {
+  const cont = document.getElementById('order-list');
+  if (!cont) return;
+  if (state.orders.length === 0) {
+    cont.innerHTML = '<p class="p-4 bg-white rounded-lg">No orders yet.</p>'; return;
+  }
+  const sorted = [...state.orders].sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
+  cont.innerHTML = sorted.map(o=>{
+    const cust = state.companies.find(c=>c.id===o.customerId);
+    const statusCol = o.status==='Delivered'?'bg-green-100 text-green-700':o.status==='Shipped'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">#${o.id.slice(0,6)} – ${cust?.name||'N/A'}</p>
+           <p class="text-sm text-gray-500">Date: ${formatDate(o.orderDate)} | Total: ${formatCurrency(o.total)}</p></div>
+      <div class="flex space-x-2">
+        <span class="px-3 py-1 rounded-full text-xs font-medium ${statusCol}">${o.status}</span>
+        <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+const renderTaskList = () => {
+  const cont = document.getElementById('task-list-container');
+  if (!cont) return;
+  const sorted = [...state.tasks].sort((a,b)=>{
+    const p = {High:3,Medium:2,Low:1};
+    const oa = isOverdue(a.dueDate,a.status)?1:0, ob = isOverdue(b.dueDate,b.status)?1:0;
+    if(oa!==ob) return ob-oa;
+    if(p[b.priority]!==p[a.priority]) return p[b.priority]-p[a.priority];
+    return new Date(a.dueDate)-new Date(b.dueDate);
+  });
+  cont.innerHTML = sorted.map(t=>{
+    const ov = isOverdue(t.dueDate,t.status);
+    const col = t.status==='Complete'?'border-green-500':ov?'border-red-500':t.priority==='High'?'border-yellow-500':'border-blue-500';
+    const bg = t.status==='Complete'?'bg-green-50':ov?'bg-red-50':'bg-white';
+    return `<div class="${bg} p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+                <div><p class="text-lg font-semibold text-gray-800">${t.title} <span class="text-sm text-gray-600">(${t.status})</span></p>
+                     <p class="text-sm text-gray-500">Due: <strong>${formatDate(t.dueDate)}</strong> | Priority: ${t.priority}</p></div>
+                <div class="flex space-x-3">
+                  <select onchange="updateTaskStatus('${t.id}',this.value)" class="p-2 border rounded-lg text-sm bg-white">
+                    ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+                  </select>
+                  <button onclick="openTaskModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                </div>
+              </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No tasks.</p>';
+};
+window.updateTaskStatus = (id,s) => updateEntity('tasks',{id,status:s});
+const renderCaseList = () => {
+  const cont = document.getElementById('case-list-container');
+  if (!cont) return;
+  const sorted = [...state.cases].sort((a,b)=> ({High:3,Medium:2,Low:1}[b.priority] - {High:3,Medium:2,Low:1}[a.priority]) );
+  cont.innerHTML = sorted.map(c=>{
+    const con = state.contacts.find(x=>x.id===c.contactId);
+    const col = c.status==='Resolved'||c.status==='Closed'?'border-green-500':c.status==='Open'?'border-red-500':'border-yellow-500';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+                <div><p class="text-lg font-semibold text-gray-800">${c.subject}</p>
+                     <p class="text-sm text-gray-500">Customer: ${con?con.firstName+' '+con.lastName:'N/A'} | Agent: ${c.agentId}</p>
+                     <p class="text-xs text-gray-500">Opened: ${formatDateTime(c.timeOpened)} | Priority: ${c.priority}</p></div>
+                <div class="flex space-x-3">
+                  <span class="text-sm font-medium px-3 py-1 rounded-full ${c.status==='Open'?'bg-red-500':'bg-blue-500'} text-white">${c.status}</span>
+                  <button onclick="openCaseModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                </div>
+              </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No cases.</p>';
+};
+const renderReports = () => { /* same as before */ };
 
 /* ==================== EXPORT ==================== */
 window.exportData = () => {

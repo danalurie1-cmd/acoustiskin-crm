@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AcoustiSkin CRM – FINAL WORKING</title>
+  <title>AcoustiSkin CRM – Enterprise V18</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -23,7 +23,7 @@
     .cal-day { min-height:80px; border:1px solid #e5e7eb; padding:4px; cursor:pointer; }
     .cal-day:hover { background:#f3f4f6; }
     .cal-day.today { background:#dbeafe; }
-    .cal-slot { font-size:0.75rem; margin:1px 0; padding:1px 2px; background:#bfdbfe; border-radius:2px; }
+    .cal-slot { font-size:0.75rem; margin:1px 0; padding:1px 2px; border-radius:2px; }
     .search-results { max-height:200px; overflow-y:auto; border:1px solid #ddd; background:white; }
     .search-result:hover { background:#f0f0f0; cursor:pointer; }
   </style>
@@ -31,7 +31,7 @@
 <body class="h-screen flex flex-col">
 
 <header class="bg-[#1a2a44] text-white p-3 flex justify-between items-center shadow-lg">
-  <h1 class="text-xl font-semibold">AcoustiSkin CRM V17</h1>
+  <h1 class="text-xl font-semibold">AcoustiSkin CRM V18</h1>
   <button onclick="exportData()" class="px-3 py-1 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition text-sm font-medium">
     Export Data JSON
   </button>
@@ -39,7 +39,7 @@
 
 <div class="flex flex-1 overflow-hidden">
   <div class="w-60 bg-[#2c3e50] text-white p-4 flex flex-col space-y-6 sidebar">
-    <div class="text-xl font-bold text-white uppercase">AcoustiSkin V17</div>
+    <div class="text-xl font-bold text-white uppercase">AcoustiSkin V18</div>
     <nav class="space-y-1" id="sidebar-nav">
       <a href="#" class="nav-link active font-medium" data-tab="dashboard">Dashboard</a>
       <a href="#" class="nav-link font-medium" data-tab="companies">Companies</a>
@@ -159,9 +159,9 @@ const STORAGE_KEYS = {
 const uuid = () => Math.random().toString(36).substring(2,9);
 const formatCurrency = a => `$${Number(a||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const formatDate = d => new Date(d).toLocaleDateString();
-const formatDateTime = d => new Date(d).toLocaleString(); // ADDED
+const formatDateTime = d => new Date(d).toLocaleString(); 
 const isOverdue = (due,status) => status!=='Complete' && new Date(due)<new Date();
-const deleteEntity = (ent,id) => { // ADDED
+const deleteEntity = (ent,id) => { 
   state[ent] = state[ent].filter(i => i.id !== id);
   saveState();
   renderActiveTab();
@@ -180,10 +180,10 @@ const loadState = () => {
   });
   if (state.companies.length === 0) {
     const cid = uuid(), pid = uuid();
-    state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin'});
-    state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001'});
-    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid});
-    state.cases.push({id:uuid(),subject:'Defective Product',contactId:pid,priority:'High',status:'Open',agentId:'JT101',timeOpened:new Date().toISOString()});
+    state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin',industry:'Tech',phone:'555-1212',address:'101 Elm St'});
+    state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001',mobile:'555-0002'});
+    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid,time:'10:00'});
+    state.cases.push({id:uuid(),subject:'Defective Product',contactId:pid,priority:'High',status:'Open',agentId:'JT101',timeOpened:new Date().toISOString(), type:'RMA'});
   }
   saveState();
 };
@@ -242,7 +242,7 @@ const closeUniversalModal = () => {
 };
 window.closeUniversalModal = closeUniversalModal;
 
-/* ==================== CALENDAR (FIXED) ==================== */
+/* ==================== CALENDAR (Point 8) ==================== */
 window.changeCalendarDate = delta => {
   if (calendarViewMode === 'daily') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
   else if (calendarViewMode === 'weekly') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
@@ -281,477 +281,80 @@ const getWeekStart = d => {
   start.setDate(diff);
   return start;
 };
+// Helper to get appts for a day
+const getApptsForDay = (ds) => {
+    const appts = state.appointments.filter(a => a.date.startsWith(ds));
+    const tasks = state.tasks.filter(t => t.dueDate === ds);
+    return [...appts, ...tasks.map(t => ({
+        ...t,
+        isTask: true,
+        title: `Task: ${t.title} (${t.priority})`,
+        time: t.time || 'All Day' // Use time if available
+    }))];
+};
 const renderDaily = c => {
   const ds = currentCalendarDate.toISOString().slice(0,10);
-  const appts = state.appointments.filter(a=>a.date.startsWith(ds));
+  const events = getApptsForDay(ds);
   let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Daily – ${currentCalendarDate.toLocaleDateString()}</h3>
               <button onclick="openScheduleModal('${ds}T09:00')" class="px-3 py-1 bg-green-600 text-white rounded-lg mb-4">+ Appointment</button>
               <button onclick="openTaskModal(null,'${ds}')" class="px-3 py-1 bg-blue-600 text-white rounded-lg mb-4 ml-2">+ To-Do</button>
               <table class="w-full text-left border-collapse">`;
+  
+  // Create a map for quick event lookup by hour slot
+  const eventMap = {};
+  events.forEach(e => {
+    const hour = e.isTask && e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).getHours();
+    if (!eventMap[hour]) eventMap[hour] = [];
+    eventMap[hour].push(e);
+  });
+  
+  // Render "All Day" events first
+  const allDayEvents = eventMap['All Day'] || [];
+  if (allDayEvents.length > 0) {
+      html += `<tr class="border-b bg-gray-100">
+                <td class="w-24 font-bold p-2 text-red-600">All Day</td>
+                <td class="p-2">
+                    ${allDayEvents.map(e => `<p class="text-sm cursor-pointer" onclick="event.stopPropagation(); ${e.isTask ? `openTaskModal('${e.id}')` : `openScheduleModal('${e.date}')`}">${e.title}</p>`).join('')}
+                </td>
+              </tr>`;
+  }
+  
   for(let h=6;h<=20;h++){
     const slot = `${ds}T${String(h).padStart(2,'0')}:00`;
-    const a = appts.find(x=>x.date===slot);
+    const eventsInHour = eventMap[h] || [];
     const time = new Date(slot).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    
     html += `<tr onclick="openScheduleModal('${slot}')" class="cursor-pointer hover:bg-gray-100 border-b">
                 <td class="w-24 font-bold p-2">${time}</td>
-                <td class="p-2 ${a?'bg-blue-50 text-blue-800':'text-gray-400'}">
-                  ${a?`**${a.title}** (${a.note||'No notes'})`:'Click to schedule'}
+                <td class="p-2 ${eventsInHour.length > 0 ? 'bg-blue-50 text-blue-800' : 'text-gray-400'}">
+                  ${eventsInHour.length > 0 ? 
+                    eventsInHour.map(e => `<p class="text-sm cursor-pointer" onclick="event.stopPropagation(); ${e.isTask ? `openTaskModal('${e.id}')` : `openScheduleModal('${e.date}')`}">${e.title}</p>`).join('')
+                    : 'Click to schedule'}
                 </td></tr>`;
   }
   html += `</table></div>`;
   c.innerHTML = html;
 };
 const renderWeekly = c => {
-  const start = getWeekStart(new Date(currentCalendarDate));
-  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Weekly</h3>
-              <div class="grid grid-cols-7 gap-2 text-center font-semibold mb-2">`;
-  for(let i=0;i<7;i++){
-    const day = new Date(start); day.setDate(start.getDate()+i);
-    const ds = day.toISOString().slice(0,10);
-    const appts = state.appointments.filter(a=>a.date.startsWith(ds));
-    const isToday = day.toDateString() === new Date().toDateString();
-    html += `<div class="cal-day ${isToday?'today':''}">
-                <strong>${day.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</strong>
-                <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600">+ Appt</button>
-                <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 ml-1">+ To-Do</button>
-                ${appts.map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')||''}
-              </div>`;
-  }
-  html += `</div></div>`;
-  c.innerHTML = html;
-};
-const renderMonthly = c => {
-  const year = currentCalendarDate.getFullYear();
-  const month = currentCalendarDate.getMonth();
-  const first = new Date(year, month, 1).getDay();
-  const days = new Date(year, month + 1, 0).getDate();
-  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">${currentCalendarDate.toLocaleString('default',{month:'long',year:'numeric'})}</h3>
-              <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-1">
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-              </div>
-              <div class="grid grid-cols-7 gap-1">`;
-  for(let i=0;i<first;i++) html += '<div></div>';
-  for(let d=1;d<=days;d++){
-    const date = new Date(year, month, d);
-    const ds = date.toISOString().slice(0,10);
-    const appts = state.appointments.filter(a=>a.date.startsWith(ds));
-    const isToday = date.toDateString() === new Date().toDateString();
-    html += `<div class="cal-day ${isToday?'today':''}">
-                <strong>${d}</strong>
-                <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600 block w-full">+ Appt</button>
-                <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 block w-full">+ To-Do</button>
-                ${appts.slice(0,2).map(a=>`<div class="cal-slot">${new Date(a.date).toLocaleTimeString([],{hour:'numeric'})} ${a.title}</div>`).join('')}
-              </div>`;
-  }
-  html += `</div></div>`;
-  c.innerHTML = html;
-};
-window.openScheduleModal = d => {
-  const ex = state.appointments.find(a=>a.date===d);
-  const title = prompt(`Appointment at ${new Date(d).toLocaleTimeString()}: Title`, ex?ex.title:'')||'';
-  if(!title && ex){ if(confirm('Delete?')) deleteEntity('appointments',ex.id); return; } // deleteEntity is now defined
-  if(!title) return;
-  const note = prompt('Notes:',ex?ex.note:'')||'';
-  updateEntity('appointments',{id:ex?ex.id:uuid(),date:d,title,note});
-};
-window.openTaskModal = (id=null, date=null) => {
-  const t = id ? state.tasks.find(x=>x.id===id) : {};
-  const html = `
-    <form onsubmit="event.preventDefault(); saveTask(this, '${id||''}');">
-      <input type="text" placeholder="Task Title" value="${t.title||''}" required class="w-full p-2 border rounded mb-3">
-      <input type="date" value="${date||t.dueDate||''}" required class="w-full p-2 border rounded mb-3">
-      <select class="w-full p-2 border rounded mb-3">
-        <option ${t.priority==='High'?'selected':''}>High</option>
-        <option ${t.priority==='Medium'?'selected':''}>Medium</option>
-        <option ${t.priority==='Low'?'selected':''}>Low</option>
-      </select>
-      <div class="flex justify-end space-x-2">
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
-        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-      </div>
-    </form>`;
-  openUniversalModal(id?'Edit Task':'New Task',html);
-};
-window.saveTask = (f,id) => {
-  const i = f.querySelectorAll('input,select');
-  const data = {title:i[0].value,dueDate:i[1].value,priority:i[2].value,status:id?state.tasks.find(x=>x.id===id).status:'Open'};
-  updateEntity('tasks', id?{id,...data}:{...data});
-  closeUniversalModal();
-};
-
-/* ==================== FULL ORDER FORM (FIXED) ==================== */
-window.openOrderEntryModal = (id=null) => {
-  const o = id ? state.orders.find(x=>x.id===id) : {};
-  currentCart = o.lines || [];
-  selectedCustomer = state.contacts.find(c=>c.id===o.contactId) || null;
-  let html = `
-    <form onsubmit="event.preventDefault(); saveOrder(this, '${id||''}');" class="space-y-6">
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">1. Customer & Account Information</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium">Search (Name/Email/Phone)</label>
-            <input type="text" id="cust-search" placeholder="Type…" class="w-full p-2 border rounded mt-1" oninput="searchCust(this.value)">
-            <div id="cust-results" class="search-results mt-1"></div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Agent</label>
-            <input type="text" value="JT101" readonly class="w-full p-2 border rounded bg-gray-100 mt-1">
-          </div>
-        </div>
-        <div id="cust-info" class="mt-3 p-3 bg-blue-50 rounded"></div>
-      </div>
-
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">2. Product & Order Details</h3>
-        <div class="relative mb-3">
-          <input type="text" id="prod-search" placeholder="Search SKU/Name…" class="w-full p-2 border rounded" oninput="searchProd(this.value)">
-          <div id="prod-results" class="absolute z-10 bg-white border w-full mt-1 max-h-48 overflow-y-auto hidden"></div>
-        </div>
-        <div id="cart-items" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
-        <div class="flex justify-between font-semibold text-lg">
-          <span>Subtotal:</span><span id="subtotal">$0.00</span>
-        </div>
-        <div class="flex gap-2 mt-2">
-          <input type="text" id="discount" placeholder="Discount Code" class="flex-1 p-2 border rounded">
-          <button type="button" onclick="applyDiscount()" class="px-3 py-1 bg-yellow-600 text-white rounded">Apply</button>
-        </div>
-        <div class="flex items-center gap-4 mt-2">
-          <label><input type="checkbox" id="gift-wrap" onchange="calcTotals()"> Gift Wrap (+$5)</label>
-          <input type="text" id="gift-msg" placeholder="Gift Message" class="flex-1 p-2 border rounded">
-        </div>
-      </div>
-
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">3. Shipping & Fulfillment</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-          <input type="text" id="ship-name" placeholder="Recipient Name" required class="p-2 border rounded">
-          <input type="text" id="ship-line1" placeholder="Street Address" required class="p-2 border rounded">
-          <input type="text" id="ship-city" placeholder="City" required class="p-2 border rounded">
-          <input type="text" id="ship-state" placeholder="State" required class="p-2 border rounded">
-          <input type="text" id="ship-zip" placeholder="Zip" required class="p-2 border rounded">
-          <input type="text" id="ship-country" placeholder="Country" value="USA" required class="p-2 border rounded">
-        </div>
-        <div class="mb-3">
-          <label class="block text-sm font-medium">Shipping Method</label>
-          <select id="ship-method" class="w-full p-2 border rounded" onchange="calcTotals()">
-            <option value="5.99">Standard – $5.99</option>
-            <option value="12.99">Expedited – $12.99</option>
-            <option value="29.99">Next Day – $29.99</option>
-          </select>
-        </div>
-        <textarea id="fulfill-notes" placeholder="Internal notes…" class="w-full p-2 border rounded" rows="2"></textarea>
-      </div>
-
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">4. Payment & Finalization</h3>
-        <select id="pay-method" class="w-full p-2 border rounded mb-3">
-          <option>Credit Card</option><option>Debit Card</option><option>Gift Card</option>
-        </select>
-        <label><input type="checkbox" id="same-bill" checked> Same as Shipping</label>
-        <div id="bill-fields" class="grid grid-cols-2 gap-4 mt-3 hidden"></div>
-        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded">
-          <p class="text-sm">PCI-compliant gateway – card data not stored.</p>
-        </div>
-        <div class="flex justify-between font-bold text-lg mt-3">
-          <span>Total Charged:</span><span id="grand-total">$0.00</span>
-        </div>
-        <label class="flex items-center mt-3">
-          <input type="checkbox" id="terms" required class="mr-2">
-          I agree to Terms & Conditions
-        </label>
-      </div>
-
-      <div class="flex justify-end space-x-3 mt-6">
-        <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium">Place Order</button>
-        <button type="button" onclick="closeUniversalModal()" class="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>
-      </div>
-    </form>`;
-  openUniversalModal(id?'Edit Order':'New Order',html);
-  updateCustomerInfo();
-  updateCartDisplay();
-  calcTotals();
-  document.getElementById('same-bill').onchange = e => document.getElementById('bill-fields').classList.toggle('hidden',e.target.checked);
-};
-
-/* Order helpers */
-const updateCustomerInfo = () => {
-  const info = document.getElementById('cust-info');
-  if (selectedCustomer) {
-    const co = state.companies.find(c=>c.id===selectedCustomer.companyId);
-    info.innerHTML = `<p><strong>${selectedCustomer.firstName} ${selectedCustomer.lastName}</strong> – ${selectedCustomer.email} (${selectedCustomer.phone})<br>${co?.name||'N/A'}</p>`;
-    document.getElementById('ship-name').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
-  } else info.innerHTML = '<p class="text-gray-500">Select a customer</p>';
-};
-const searchCust = q => {
-  const res = document.getElementById('cust-results');
-  if (!q.trim()) { res.innerHTML=''; return; }
-  const matches = state.contacts.filter(c=>
-    `${c.firstName} ${c.lastName}`.toLowerCase().includes(q.toLowerCase()) ||
-    c.email.toLowerCase().includes(q.toLowerCase()) ||
-    c.phone.includes(q)
-  ).slice(0,5);
-  res.innerHTML = matches.map(c=>`<div class="p-2 search-result" onclick="selectCust('${c.id}')">${c.firstName} ${c.lastName} – ${c.email}</div>`).join('');
-};
-window.selectCust = id => {
-  selectedCustomer = state.contacts.find(c=>c.id===id);
-  document.getElementById('cust-search').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
-  document.getElementById('cust-results').innerHTML = '';
-  updateCustomerInfo();
-};
-const searchProd = q => {
-  const res = document.getElementById('prod-results');
-  if (!q.trim()) { res.classList.add('hidden'); return; }
-  const matches = state.inventory.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.id.includes(q));
-  res.innerHTML = matches.map(p=>`<div class="p-2 search-result" onclick="addToCart('${p.id}')">${p.name} – $${p.unitPrice}</div>`).join('');
-  res.classList.remove('hidden');
-};
-window.addToCart = id => {
-  const p = state.inventory.find(x=>x.id===id);
-  // Ensure default variants are selected if available
-  const variant = {};
-  if (p.variants.size && p.variants.size.length > 0) variant.size = p.variants.size[0];
-  if (p.variants.color && p.variants.color.length > 0) variant.color = p.variants.color[0];
-
-  currentCart.push({productId:id,qty:1,variant:variant,custom:''});
-  document.getElementById('prod-search').value='';
-  document.getElementById('prod-results').classList.add('hidden');
-  updateCartDisplay();
-  calcTotals();
-};
-const updateCartDisplay = () => {
-  const c = document.getElementById('cart-items');
-  c.innerHTML = currentCart.map((it,i)=>{
-    const p = state.inventory.find(x=>x.id===it.productId);
-    if (!p) return ''; // Skip if product not found
-
-    // Helper to generate select options
-    const variantSelect = (key, currentVal, options) => {
-      if (!options || options.length === 0) return '';
-      return `<select onchange="updVariant(${i},'${key}',this.value)" class="text-xs p-1 border rounded">
-        ${options.map(s=>`<option value="${s}" ${currentVal===s?'selected':''}>${s}</option>`).join('')}
-      </select>`;
-    };
+    const start = getWeekStart(new Date(currentCalendarDate));
+    let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Weekly</h3>
+                <div class="grid grid-cols-7 gap-2 text-center font-semibold mb-2">`;
     
-    // Set default variants if not already set (important for dynamic updates)
-    if (!it.variant.size && p.variants.size && p.variants.size.length > 0) it.variant.size = p.variants.size[0];
-    if (!it.variant.color && p.variants.color && p.variants.color.length > 0) it.variant.color = p.variants.color[0];
+    const oneDay = 24 * 60 * 60 * 1000;
+    const today = new Date().toDateString();
 
-    return `<div class="p-3 bg-white border rounded flex items-center justify-between">
-      <div class="flex-1">
-        <p class="font-medium">${p.name}</p>
-        <div class="flex gap-2 mt-1">
-          ${variantSelect('size', it.variant.size, p.variants.size)}
-          ${variantSelect('color', it.variant.color, p.variants.color)}
-          <input type="text" placeholder="Name/Number" value="${it.custom||''}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
-        </div>
-      </div>
-      <input type="number" min="1" value="${it.qty}" onchange="updQty(${i},this.value)" class="w-16 p-1 border rounded mx-2">
-      <span class="font-semibold">${formatCurrency(p.unitPrice*it.qty)}</span>
-      <button onclick="remItem(${i})" class="text-red-600 ml-2">×</button>
-    </div>`;
-  }).join('')||'<p class="text-gray-500">Cart empty</p>';
-};
-window.updVariant = (i,k,v) => { currentCart[i].variant[k]=v; };
-window.updCustom = (i,v) => { currentCart[i].custom=v; };
-window.updQty = (i,q) => { currentCart[i].qty=parseInt(q)||1; updateCartDisplay(); calcTotals(); };
-window.remItem = i => { currentCart.splice(i,1); updateCartDisplay(); calcTotals(); };
-const calcTotals = () => {
-  const sub = currentCart.reduce((s,it)=>s+(state.inventory.find(p=>p.id===it.productId)?.unitPrice||0)*it.qty,0);
-  const ship = parseFloat(document.getElementById('ship-method')?.value)||0;
-  const gift = document.getElementById('gift-wrap')?.checked?5:0;
-  const tax = sub*0.08;
-  const total = sub + ship + gift + tax;
-  
-  if (document.getElementById('subtotal')) document.getElementById('subtotal').textContent = formatCurrency(sub);
-  if (document.getElementById('grand-total')) document.getElementById('grand-total').textContent = formatCurrency(total);
-};
-window.saveOrder = (f, id) => { // FIXED function signature
-  if (!document.getElementById('terms')?.checked) return alert('Please agree to Terms & Conditions.');
-  if (!selectedCustomer) return alert('Please select a customer.');
-  if (currentCart.length === 0) return alert('Please add items to the cart.');
-  
-  // Recalculate totals one last time before saving
-  calcTotals(); 
+    for(let i=0;i<7;i++){
+        const day = new Date(start); day.setDate(start.getDate()+i);
+        const ds = day.toISOString().slice(0,10);
+        const events = getApptsForDay(ds); 
+        const isToday = day.toDateString() === today;
+        
+        const sortedEvents = events.sort((a, b) => {
+            const timeA = a.time === 'All Day' ? -1 : parseInt((a.date || a.time).slice(0, 2));
+            const timeB = b.time === 'All Day' ? -1 : parseInt((b.date || b.time).slice(0, 2));
+            return timeA - timeB;
+        });
 
-  const o = {
-    id: id || uuid(),
-    customerId: selectedCustomer?.companyId,
-    contactId: selectedCustomer?.id,
-    lines: currentCart,
-    subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(/[$,]/g,'')),
-    shipping: parseFloat(document.getElementById('ship-method').value),
-    giftWrap: document.getElementById('gift-wrap').checked?5:0,
-    total: parseFloat(document.getElementById('grand-total').textContent.replace(/[$,]/g,'')),
-    status: 'Pending',
-    orderDate: new Date().toISOString(),
-    shippingAddress: {
-      name: document.getElementById('ship-name').value,
-      line1: document.getElementById('ship-line1').value,
-      city: document.getElementById('ship-city').value,
-      state: document.getElementById('ship-state').value,
-      zip: document.getElementById('ship-zip').value,
-      country: document.getElementById('ship-country').value
-    },
-    paymentMethod: document.getElementById('pay-method').value,
-    notes: document.getElementById('fulfill-notes').value
-  };
-  
-  updateEntity('orders', o);
-  closeUniversalModal();
-};
-window.applyDiscount = () => alert('Discount logic is not yet implemented!');
-
-
-/* ==================== OTHER RENDERS ==================== */
-const renderDashboard = () => {
-  const cust = state.companies.filter(c=>c.status==='Customer').length;
-  const openT = state.tasks.filter(t=>t.status!=='Complete').length;
-  const rev = state.orders.reduce((s,o)=>s+o.total,0);
-  const openC = state.cases.filter(c=>c.status!=='Closed'&&c.status!=='Resolved').length;
-  document.getElementById('dashboard-stats').innerHTML = `
-    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600"><p class="text-sm text-gray-500">Customers</p><h3 class="text-3xl font-bold text-blue-600">${cust}</h3></div>
-    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600"><p class="text-sm text-gray-500">Revenue</p><h3 class="text-3xl font-bold text-green-600">${formatCurrency(rev)}</h3></div>
-    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500"><p class="text-sm text-gray-500">Open Tasks</p><h3 class="text-3xl font-bold text-yellow-500">${openT}</h3></div>
-    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600"><p class="text-sm text-gray-500">Open Cases</p><h3 class="text-3xl font-bold text-red-600">${openC}</h3></div>`;
-  const ov = state.tasks.filter(t=>isOverdue(t.dueDate,t.status));
-  document.getElementById('overdue-tasks-list').innerHTML = ov.map(t=>`<li class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between">
-    <div><p class="font-medium text-red-700">${t.title}</p><p class="text-sm text-red-500">Due: ${formatDate(t.dueDate)}</p></div>
-    <button onclick="openTaskModal('${t.id}')" class="text-red-700 hover:text-red-900 text-sm font-medium">Edit</button></li>`).join('')||'<p class="text-gray-500">No overdue tasks.</p>';
-};
-const renderCompanies = (custOnly=false) => {
-  const cont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
-  if (!cont) return;
-  let list = state.companies;
-  if (custOnly) list = list.filter(c=>c.status==='Customer');
-  const sorted = [...list].sort((a,b)=>a.name.localeCompare(b.name));
-  cont.innerHTML = sorted.map(c=>`
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
-      <div><p class="text-lg font-semibold text-gray-800">${c.name}
-          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${c.status==='Customer'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-700'}">${c.status}</span>
-          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-yellow-100 text-yellow-700">${c.customerTier||'None'}</span></p>
-      <p class="text-sm text-gray-500">Owner: ${c.owner||'N/A'} | Revenue: ${formatCurrency(c.revenue)}</p></div>
-      <button onclick="openCompanyModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
-    </div>`).join('')||'<p class="p-4 bg-white rounded-lg">No records.</p>';
-};
-const renderContacts = () => {
-  const cont = document.getElementById('contact-list');
-  if (!cont) return;
-  const sorted = [...state.contacts].sort((a,b)=>a.lastName.localeCompare(b.lastName));
-  cont.innerHTML = sorted.map(c=>{
-    const comp = state.companies.find(x=>x.id===c.companyId)?.name||'Unassigned';
-    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
-      <div><p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm text-gray-600">(${c.jobTitle||'N/A'})</span></p>
-             <p class="text-sm text-gray-500">Company: ${comp} | Mobile: ${c.mobile||'N/A'}</p>
-             ${c.pickleballClub?`<p class="text-xs font-medium text-purple-600 mt-1">Pickleball Club: ${c.pickleballClub}</p>`:''}</div>
-      <div class="flex space-x-2">
-        <button onclick="openCaseModal(null,'${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
-        <button onclick="openContactModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
-      </div>
-    </div>`;
-  }).join('')||'<p class="p-4 bg-white rounded-lg">No contacts.</p>';
-};
-const renderOrderList = () => {
-  const cont = document.getElementById('order-list');
-  if (!cont) return;
-  if (state.orders.length === 0) {
-    cont.innerHTML = '<p class="p-4 bg-white rounded-lg">No orders yet.</p>'; return;
-  }
-  const sorted = [...state.orders].sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
-  cont.innerHTML = sorted.map(o=>{
-    const cust = state.companies.find(c=>c.id===o.customerId);
-    const statusCol = o.status==='Delivered'?'bg-green-100 text-green-700':o.status==='Shipped'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700';
-    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
-      <div><p class="text-lg font-semibold text-gray-800">#${o.id.slice(0,6)} – ${cust?.name||'N/A'}</p>
-             <p class="text-sm text-gray-500">Date: ${formatDate(o.orderDate)} | Total: ${formatCurrency(o.total)}</p></div>
-      <div class="flex space-x-2">
-        <span class="px-3 py-1 rounded-full text-xs font-medium ${statusCol}">${o.status}</span>
-        <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
-      </div>
-    </div>`;
-  }).join('');
-};
-const renderTaskList = () => {
-  const cont = document.getElementById('task-list-container');
-  if (!cont) return;
-  const sorted = [...state.tasks].sort((a,b)=>{
-    const p = {High:3,Medium:2,Low:1};
-    const oa = isOverdue(a.dueDate,a.status)?1:0, ob = isOverdue(b.dueDate,b.status)?1:0;
-    if(oa!==ob) return ob-oa;
-    if(p[b.priority]!==p[a.priority]) return p[b.priority]-p[a.priority];
-    return new Date(a.dueDate)-new Date(b.dueDate);
-  });
-  cont.innerHTML = sorted.map(t=>{
-    const ov = isOverdue(t.dueDate,t.status);
-    const col = t.status==='Complete'?'border-green-500':ov?'border-red-500':t.priority==='High'?'border-yellow-500':'border-blue-500';
-    const bg = t.status==='Complete'?'bg-green-50':ov?'bg-red-50':'bg-white';
-    return `<div class="${bg} p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
-               <div><p class="text-lg font-semibold text-gray-800">${t.title} <span class="text-sm text-gray-600">(${t.status})</span></p>
-                    <p class="text-sm text-gray-500">Due: <strong>${formatDate(t.dueDate)}</strong> | Priority: ${t.priority}</p></div>
-               <div class="flex space-x-3">
-                 <select onchange="updateTaskStatus('${t.id}',this.value)" class="p-2 border rounded-lg text-sm bg-white">
-                   ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
-                 </select>
-                 <button onclick="openTaskModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
-               </div>
-             </div>`;
-  }).join('')||'<p class="p-4 bg-white rounded-lg">No tasks.</p>';
-};
-window.updateTaskStatus = (id,s) => updateEntity('tasks',{id,status:s});
-const renderCaseList = () => {
-  const cont = document.getElementById('case-list-container');
-  if (!cont) return;
-  const sorted = [...state.cases].sort((a,b)=> ({High:3,Medium:2,Low:1}[b.priority] - {High:3,Medium:2,Low:1}[a.priority]) );
-  cont.innerHTML = sorted.map(c=>{
-    const con = state.contacts.find(x=>x.id===c.contactId);
-    const col = c.status==='Resolved'||c.status==='Closed'?'border-green-500':c.status==='Open'?'border-red-500':'border-yellow-500';
-    return `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
-               <div><p class="text-lg font-semibold text-gray-800">${c.subject}</p>
-                    <p class="text-sm text-gray-500">Customer: ${con?con.firstName+' '+con.lastName:'N/A'} | Agent: ${c.agentId}</p>
-                    <p class="text-xs text-gray-500">Opened: ${formatDateTime(c.timeOpened)} | Priority: ${c.priority}</p></div>
-               <div class="flex space-x-3">
-                 <span class="text-sm font-medium px-3 py-1 rounded-full ${c.status==='Open'?'bg-red-500':'bg-blue-500'} text-white">${c.status}</span>
-                 <button onclick="openCaseModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
-               </div>
-             </div>`;
-  }).join('')||'<p class="p-4 bg-white rounded-lg">No cases.</p>';
-};
-// These are placeholders for the modals not defined in the original script
-window.openCompanyModal = (id) => openUniversalModal(id?'Edit Company':'New Company', '<p class="p-4">Company form goes here.</p>');
-window.openContactModal = (id) => openUniversalModal(id?'Edit Contact':'New Contact', '<p class="p-4">Contact form goes here.</p>');
-window.openCaseModal = (id, contactId) => openUniversalModal(id?'Edit Case':'New Case', `<p class="p-4">Case form goes here. Related Contact ID: ${contactId||'N/A'}</p>`);
-window.setReportType = (type) => {
-  activeReportType = type;
-  document.querySelectorAll('.report-btn').forEach(btn => {
-    if (btn.textContent.toLowerCase().includes(type)) {
-      btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-      btn.classList.add('bg-blue-600', 'text-white');
-    } else {
-      btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
-      btn.classList.remove('bg-blue-600', 'text-white');
-    }
-  });
-  renderReports();
-};
-const renderReports = () => { 
-  const output = document.getElementById('report-output');
-  output.innerHTML = `<h3 class="text-xl font-semibold mb-4">${activeReportType.toUpperCase()} Report</h3><p>Report generation logic for ${activeReportType} is a placeholder.</p>`;
-};
-
-
-/* ==================== EXPORT ==================== */
-window.exportData = () => {
-  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='acoustiskin_crm.json'; a.click();
-  URL.revokeObjectURL(url);
-};
-
-/* ==================== INIT ==================== */
-document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  renderActiveTab();
-});
-</script>
-</body>
-</html>
+        html += `<div class="cal-day ${isToday?'today':''}" onclick="setCalendarViewMode('daily'); currentCalendarDate.setDate(${day.getDate()}); renderCalendar();">
+                    <strong>${day.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</strong>
+                    <button onclick="event.stopPropagation(); openScheduleModal('${ds}T09:00')" class="text-xs text-green-600">+

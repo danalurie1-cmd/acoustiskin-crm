@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AcoustiSkin CRM (V17 – Full Order Form)</title>
+  <title>AcoustiSkin CRM (V17 – Fixed All)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -20,6 +20,10 @@
     .modal-content { max-width:1000px; max-height:95vh; overflow-y:auto; }
     .list-item { transition:all .2s; }
     .list-item:hover { transform:translateY(-2px); box-shadow:0 4px 6px rgba(0,0,0,.1); }
+    .cal-day { min-height:80px; border:1px solid #e5e7eb; padding:4px; cursor:pointer; }
+    .cal-day:hover { background:#f3f4f6; }
+    .cal-day.today { background:#dbeafe; }
+    .cal-slot { font-size:0.75rem; margin:1px 0; padding:1px 2px; background:#bfdbfe; border-radius:2px; }
     .search-results { max-height:200px; overflow-y:auto; border:1px solid #ddd; background:white; }
     .search-result:hover { background:#f0f0f0; cursor:pointer; }
   </style>
@@ -29,7 +33,7 @@
 <header class="bg-[#1a2a44] text-white p-3 flex justify-between items-center shadow-lg">
   <h1 class="text-xl font-semibold">AcoustiSkin CRM V17</h1>
   <button onclick="exportData()" class="px-3 py-1 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition text-sm font-medium">
-    Export Data JSON
+    💾 Export Data JSON
   </button>
 </header>
 
@@ -53,7 +57,6 @@
   <!-- Main Content -->
   <main class="flex-1 p-6 bg-gray-50 overflow-y-auto" id="main-content-area">
 
-    <!-- DASHBOARD -->
     <div id="dashboard" class="content active">
       <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
         <h2 class="text-2xl font-bold text-gray-800">Sales Overview</h2>
@@ -65,15 +68,58 @@
       </div>
     </div>
 
-    <!-- ORDERS -->
+    <div id="companies" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">All Companies (Accounts)</h2>
+      <button onclick="openCompanyModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Company</button>
+      <div id="company-list" class="space-y-3"></div>
+    </div>
+
+    <div id="customers" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Active Customers</h2>
+      <p class="text-gray-600 mb-4">Filtered list of companies with status 'Customer'.</p>
+      <div id="customer-list" class="space-y-3"></div>
+    </div>
+
+    <div id="contacts" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">All Contacts (People)</h2>
+      <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Contact</button>
+      <div id="contact-list" class="space-y-3"></div>
+    </div>
+
     <div id="orders" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Tracking & History</h2>
       <button onclick="openOrderEntryModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition mb-4">New Phone Order</button>
       <div id="order-list" class="space-y-3"></div>
     </div>
 
-    <!-- (Other tabs: companies, customers, contacts, tasks, cases, calendar, reports) -->
-    <!-- Omitted for brevity – include from previous working version -->
+    <div id="tasks" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">To-Do List / Tasks</h2>
+      <button onclick="openTaskModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Task</button>
+      <div id="task-list-container" class="space-y-3"></div>
+    </div>
+
+    <div id="cases" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Customer Case Management (Support)</h2>
+      <button onclick="openCaseModal()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg shadow-md hover:bg-yellow-700 transition mb-4">Create New Case</button>
+      <div id="case-list-container" class="space-y-3"></div>
+    </div>
+
+    <div id="calendar" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Calendar & Appointments</h2>
+      <div id="calendar-controls" class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm mb-4"></div>
+      <div id="calendar-view-container" class="bg-white p-6 rounded-xl shadow-md"></div>
+    </div>
+
+    <div id="reports" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Reports & Analytics</h2>
+      <div class="flex space-x-3 p-4 bg-white rounded-xl shadow-md border-b flex-wrap mb-4" id="report-buttons">
+        <button onclick="setReportType('sales')" class="report-btn px-4 py-2 text-sm rounded-lg bg-blue-600 text-white">Sales Volume (D/W/M)</button>
+        <button onclick="setReportType('tasks')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Task Performance</button>
+        <button onclick="setReportType('inventory')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Inventory Status</button>
+        <button onclick="setReportType('pickleball')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Pickleball Clubs</button>
+      </div>
+      <div id="report-output" class="bg-white p-6 rounded-xl shadow-md space-y-6"></div>
+    </div>
 
   </main>
 </div>
@@ -94,106 +140,424 @@
 </div>
 
 <script>
-/* ==================== GLOBAL STATE ==================== */
 let state = {
   companies: [], contacts: [], tasks: [], appointments: [], orders: [],
-  inventory: [
-    {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},
-    {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}
-  ],
+  inventory: [{id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},{id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}],
   cases: []
 };
+let currentCalendarDate = new Date();
+let calendarViewMode = 'daily';
+let activeReportType = 'sales';
+let currentCart = [];
+let selectedCustomer = null;
 
-/* ==================== UTILITIES ==================== */
-const STORAGE_KEYS = { companies:'crm_companies', contacts:'crm_contacts', orders:'crm_orders', inventory:'crm_inventory' };
+const STORAGE_KEYS = {companies:'crm_companies',contacts:'crm_contacts',tasks:'crm_tasks',appointments:'crm_appointments',orders:'crm_orders',inventory:'crm_inventory',cases:'crm_cases'};
 const uuid = () => Math.random().toString(36).substring(2,9);
 const formatCurrency = a => `$${Number(a||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const formatDate = d => new Date(d).toLocaleDateString();
+const formatDateTime = d => new Date(d).toLocaleString();
+const isOverdue = (due,status) => status!=='Complete' && new Date(due)<new Date();
 
-/* ==================== STORAGE ==================== */
 const loadState = () => {
-  Object.keys(STORAGE_KEYS).forEach(k=>{
+  Object.keys(STORAGE_KEYS).forEach(k => {
     const s = localStorage.getItem(STORAGE_KEYS[k]);
-    if(s) try{ state[k]=JSON.parse(s); }catch(e){}
-    else if(k==='inventory') state[k]=[
-      {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},
-      {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}
-    ];
-    else state[k]=[];
+    if (s) try { state[k] = JSON.parse(s); } catch (e) { console.error('Corrupt',k); }
+    else if (k === 'inventory') state[k] = [{id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},{id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}];
+    else state[k] = [];
   });
-  if(state.companies.length===0){
-    const cid=uuid();
-    state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',revenue:50000,owner:'Admin'});
-    state.contacts.push({id:uuid(),firstName:'Jane',lastName:'Doe',companyId:cid,email:'jane@alpha.com',phone:'555-0001'});
+  if (state.companies.length === 0) {
+    const cid = uuid(), pid = uuid();
+    state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin'});
+    state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001',pickleballClub:'Falmouth Air-Balls Club'});
+    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid,notes:'Confirm shipping.'});
+    state.cases.push({id:uuid(),subject:'Defective Product',contactId:pid,priority:'High',status:'Open',agentId:'JT101',timeOpened:new Date().toISOString()});
   }
   saveState();
 };
-const saveState = () => Object.keys(STORAGE_KEYS).forEach(k=>localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(state[k])));
+const saveState = () => Object.keys(STORAGE_KEYS).forEach(k => localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(state[k])));
 const updateEntity = (ent,data) => {
-  const idx = state[ent].findIndex(i=>i.id===data.id);
-  if(idx>-1) state[ent][idx]={...state[ent][idx],...data};
+  const idx = state[ent].findIndex(i => i.id === data.id);
+  if (idx > -1) state[ent][idx] = {...state[ent][idx],...data};
   else state[ent].push({id:uuid(),createdAt:new Date().toISOString(),...data});
   saveState(); renderActiveTab();
 };
+const deleteEntity = (ent,id) => { state[ent] = state[ent].filter(i => i.id !== id); saveState(); renderActiveTab(); };
 
-/* ==================== NAVIGATION ==================== */
 const renderActiveTab = () => {
-  const tab = document.querySelector('.nav-link.active')?.dataset.tab;
-  if (!tab) return;
-  document.querySelectorAll('.content').forEach(c=>c.classList.remove('auto'));
+  const activeLink = document.querySelector('.nav-link.active');
+  if (!activeLink) return;
+  const tab = activeLink.dataset.tab;
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
   const el = document.getElementById(tab);
   if (el) el.classList.add('active');
-  if(tab==='orders') renderOrderList();
+
+  const fns = {
+    dashboard: renderDashboard,
+    companies: () => renderCompanies(false),
+    customers: () => renderCompanies(true),
+    contacts: renderContacts,
+    orders: renderOrderList,
+    tasks: renderTaskList,
+    cases: renderCaseList,
+    calendar: renderCalendar,
+    reports: renderReports
+  };
+  if (fns[tab]) fns[tab]();
 };
 const setupNavigation = () => {
-  document.querySelectorAll('.nav-link').forEach(l=>{
-    l.addEventListener('click',e=>{
-      e.preventDefault();
-      document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active'));
-      l.classList.add('active');
-      renderActiveTab();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-link').forEach(l => {
+      l.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+        l.classList.add('active');
+        renderActiveTab();
+      });
     });
   });
 };
 
-/* ==================== ORDER LIST ==================== */
-const renderOrderList = () => {
-  const cont = document.getElementById('order-list');
-  if(state.orders.length===0){
-    cont.innerHTML='<p class="p-4 bg-white rounded-lg">No orders yet.</p>'; return;
+const getModalContainer = () => document.getElementById('universalModal');
+const getModalTitle = () => document.getElementById('modal-title');
+const getModalFormArea = () => document.getElementById('modal-form-area');
+const openUniversalModal = (title, formHTML) => {
+  getModalTitle().textContent = title;
+  getModalFormArea().innerHTML = formHTML;
+  getModalContainer().classList.add('active');
+};
+const closeUniversalModal = () => {
+  getModalContainer().classList.remove('active');
+  renderActiveTab();
+};
+window.closeUniversalModal = closeUniversalModal;
+
+window.setReportType = type => {
+  activeReportType = type;
+  document.querySelectorAll('#report-buttons .report-btn').forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white');
+    btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+  });
+  const btn = document.querySelector(`#report-buttons button[onclick="setReportType('${type}')"]`);
+  if (btn) {
+    btn.classList.add('bg-blue-600', 'text-white');
+    btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
   }
-  cont.innerHTML = state.orders.map(o => {
-    const cust = state.companies.find(c=>c.id===o.customerId) || {};
-    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 list-item">
-      <p class="font-semibold">#${o.id.slice(0,6)} – ${cust.name||'N/A'}</p>
-      <p class="text-sm text-gray-600">Total: ${formatCurrency(o.total)} | Status: ${o.status}</p>
-      <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 text-sm">Edit</button>
+  renderReports();
+};
+const renderReports = () => {
+  const output = document.getElementById('report-output');
+  let html = '';
+  if (activeReportType === 'tasks') html = renderTaskReport();
+  else if (activeReportType === 'sales') html = renderSalesReports();
+  else if (activeReportType === 'inventory') html = renderInventoryReport();
+  else if (activeReportType === 'pickleball') html = renderPickleballReport();
+  output.innerHTML = html;
+};
+const renderTaskReport = () => {
+  const total = state.tasks.length;
+  const completed = state.tasks.filter(t => t.status === 'Complete').length;
+  const overdue = state.tasks.filter(t => isOverdue(t.dueDate, t.status)).length;
+  return `<h4 class="text-xl font-bold mb-4">Task Productivity Summary</h4>
+          <table class="w-full text-left table-auto">
+            <thead class="bg-gray-100"><tr><th class="p-3">Metric</th><th class="p-3">Value</th></tr></thead>
+            <tbody>
+              <tr><td class="p-3 border-t">Total Tasks</td><td class="p-3 border-t">${total}</td></tr>
+              <tr><td class="p-3 border-t">Completed</td><td class="p-3 border-t font-bold text-green-600">${completed}</td></tr>
+              <tr><td class="p-3 border-t">Overdue</td><td class="p-3 border-t font-bold text-red-600">${overdue}</td></tr>
+            </tbody>
+          </table>`;
+};
+const renderSalesReports = () => {
+  const calculateSalesByPeriod = period => {
+    const now = new Date();
+    const startOfPeriod = new Date(now);
+    if (period === 'daily') startOfPeriod.setHours(0, 0, 0, 0);
+    else if (period === 'weekly') { startOfPeriod.setDate(now.getDate() - now.getDay()); startOfPeriod.setHours(0, 0, 0, 0); }
+    else if (period === 'monthly') { startOfPeriod.setDate(1); startOfPeriod.setHours(0, 0, 0, 0); }
+    return state.orders.filter(o => new Date(o.orderDate) >= startOfPeriod && o.status === 'Delivered').reduce((sum, o) => sum + o.total, 0);
+  };
+  return `<h4 class="text-xl font-bold mb-4">Delivered Sales Volume</h4>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">Today</p><p class="text-2xl font-bold">${formatCurrency(calculateSalesByPeriod('daily'))}</p></div>
+            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">This Week</p><p class="text-2xl font-bold">${formatCurrency(calculateSalesByPeriod('weekly'))}</p></div>
+            <div class="bg-blue-50 p-4 rounded-lg"><p class="text-sm text-gray-600">This Month</p><p class="text-2xl font-bold">${formatCurrency(calculateSalesByPeriod('monthly'))}</p></div>
+          </div>`;
+};
+const renderInventoryReport = () => `<h4 class="text-xl font-bold mb-4">Inventory Status</h4>
+  <ul class="space-y-2">${state.inventory.map(p => `<li class="flex justify-between p-3 border rounded-lg ${p.availableQty <= 10 ? 'bg-red-100 text-red-700' : 'bg-gray-50'}">
+    <span>${p.name} (${p.id})</span><span class="font-bold">Available: ${p.availableQty}</span></li>`).join('')}</ul>`;
+const renderPickleballReport = () => {
+  const clubCounts = state.contacts.reduce((acc, contact) => {
+    const club = contact.pickleballClub || 'Unaffiliated';
+    acc[club] = (acc[club] || 0) + 1;
+    return acc;
+  }, {});
+  const totalPlayers = state.contacts.length;
+  return `<h4 class="text-xl font-bold mb-4">Pickleball Club Segmentation</h4>
+          <table class="w-full text-left table-auto">
+            <thead class="bg-gray-100"><tr><th class="p-3">Club</th><th class="p-3">Count</th><th class="p-3">% of Contacts</th></tr></thead>
+            <tbody>${Object.entries(clubCounts).map(([club, count]) => `<tr><td class="p-3 border-t">${club}</td><td class="p-3 border-t">${count}</td><td class="p-3 border-t">${totalPlayers > 0 ? ((count / totalPlayers) * 100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody>
+          </table>`;
+};
+
+window.changeCalendarDate = delta => {
+  if (calendarViewMode === 'daily') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
+  else if (calendarViewMode === 'weekly') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
+  else if (calendarViewMode === 'monthly') currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
+};
+window.setCalendarViewMode = mode => { calendarViewMode = mode; renderCalendar(); };
+const renderCalendar = () => {
+  renderCalendarControls();
+  const container = document.getElementById('calendar-view-container');
+  if (calendarViewMode === 'daily') renderDailySchedule(container);
+  else if (calendarViewMode === 'weekly') renderWeeklyView(container);
+  else if (calendarViewMode === 'monthly') renderMonthlyView(container);
+};
+const renderCalendarControls = () => {
+  const controls = document.getElementById('calendar-controls');
+  const label = calendarViewMode === 'daily' ? currentCalendarDate.toLocaleDateString() :
+                calendarViewMode === 'weekly' ? `Week of ${getWeekStart(currentCalendarDate).toLocaleDateString()}` :
+                currentCalendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  controls.innerHTML = `
+    <div class="space-x-2">
+      <button onclick="setCalendarViewMode('daily')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode === 'daily' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">Daily</button>
+      <button onclick="setCalendarViewMode('weekly')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode === 'weekly' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">Weekly</button>
+      <button onclick="setCalendarViewMode('monthly')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode === 'monthly' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">Monthly</button>
+    </div>
+    <div class="space-x-2">
+      <button onclick="changeCalendarDate(-1)" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Prev</button>
+      <span class="font-semibold text-gray-700">${label}</span>
+      <button onclick="changeCalendarDate(1)" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Next</button>
+    </div>`;
+};
+const getWeekStart = d => {
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
+};
+const renderDailySchedule = container => {
+  const dateStr = currentCalendarDate.toISOString().slice(0,10);
+  const dailyAppts = state.appointments.filter(a => a.date.startsWith(dateStr));
+  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Daily Schedule for ${currentCalendarDate.toLocaleDateString()}</h3>
+              <button onclick="openScheduleModal('${dateStr}T09:00:00')" class="px-3 py-1 bg-accent text-white rounded-lg mb-4">+ Add Appointment</button>
+              <table class="w-full text-left border-collapse">`;
+  for (let h = 6; h <= 20; h++) {
+    const timeSlot = `${dateStr}T${String(h).padStart(2, '0')}:00:00`;
+    const appt = dailyAppts.find(a => a.date === timeSlot);
+    const displayTime = new Date(timeSlot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    html += `<tr onclick="openScheduleModal('${timeSlot}')" class="cursor-pointer hover:bg-gray-100 border-b">
+               <td class="w-24 font-bold p-2">${displayTime}</td>
+               <td class="p-2 ${appt ? 'bg-blue-50 text-blue-800' : 'text-gray-400'}">${appt ? `**${appt.title}** (${appt.note || 'No notes'})` : 'Click to Schedule Appointment'}</td></tr>`;
+  }
+  html += `</table></div>`;
+  container.innerHTML = html;
+};
+const renderWeeklyView = container => {
+  const weekStart = getWeekStart(new Date(currentCalendarDate));
+  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Weekly Schedule</h3>
+              <div class="grid grid-cols-7 gap-2 text-center font-semibold mb-2">`;
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    const dateStr = day.toISOString().slice(0,10);
+    const dayAppts = state.appointments.filter(a => a.date.startsWith(dateStr));
+    const isToday = day.toDateString() === new Date().toDateString();
+    html += `<div class="cal-day ${isToday ? 'today' : ''}" onclick="openScheduleModal('${dateStr}T09:00:00')">
+               <strong>${day.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</strong>
+               ${dayAppts.map(a => `<div class="cal-slot">${new Date(a.date).toLocaleTimeString([], {hour: 'numeric'})} ${a.title}</div>`).join('') || '<small>Click to add</small>'}
+             </div>`;
+  }
+  html += `</div></div>`;
+  container.innerHTML = html;
+};
+const renderMonthlyView = container => {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">${currentCalendarDate.toLocaleString('default', {month: 'long', year: 'numeric'})}</h3>
+              <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-1">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+              </div>
+              <div class="grid grid-cols-7 gap-1">`;
+  for (let i = 0; i < firstDay; i++) html += '<div></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateStr = date.toISOString().slice(0,10);
+    const dayAppts = state.appointments.filter(a => a.date.startsWith(dateStr));
+    const isToday = date.toDateString() === new Date().toDateString();
+    html += `<div class="cal-day ${isToday ? 'today' : ''}" onclick="openScheduleModal('${dateStr}T09:00:00')">
+               <strong>${day}</strong>
+               ${dayAppts.slice(0,3).map(a => `<div class="cal-slot">${new Date(a.date).toLocaleTimeString([], {hour: 'numeric'})} ${a.title}</div>`).join('') || '<small>Click to add</small>'}
+             </div>`;
+  }
+  html += `</div></div>`;
+  container.innerHTML = html;
+};
+window.openScheduleModal = dateStr => {
+  const existingAppt = state.appointments.find(a => a.date === dateStr);
+  const title = prompt(`Schedule Appointment at ${new Date(dateStr).toLocaleTimeString()}: Enter Title`, existingAppt ? existingAppt.title : '');
+  if (title === null) return;
+  if (title.trim() === '' && existingAppt) { if (confirm('Delete this appointment?')) deleteEntity('appointments', existingAppt.id); return; }
+  if (title.trim() === '') return;
+  const note = prompt('Enter notes:', existingAppt ? existingAppt.note : '');
+  updateEntity('appointments', { id: existingAppt ? existingAppt.id : uuid(), date: dateStr, title: title.trim(), note: note || '' });
+};
+
+const renderTaskList = () => {
+  const container = document.getElementById('task-list-container');
+  if (!container) return;
+  const sortedTasks = [...state.tasks].sort((a, b) => {
+    const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+    const overdueA = isOverdue(a.dueDate, a.status) ? 1 : 0;
+    const overdueB = isOverdue(b.dueDate, b.status) ? 1 : 0;
+    if (overdueA !== overdueB) return overdueB - overdueA;
+    if (priorityOrder[b.priority] !== priorityOrder[a.priority]) return priorityOrder[b.priority] - priorityOrder[a.priority];
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+  container.innerHTML = sortedTasks.map(t => {
+    const overdue = isOverdue(t.dueDate, t.status);
+    const color = t.status === 'Complete' ? 'border-green-500' : overdue ? 'border-red-500' : t.priority === 'High' ? 'border-yellow-500' : 'border-blue-500';
+    const bgColor = t.status === 'Complete' ? 'bg-green-50' : overdue ? 'bg-red-50' : 'bg-white';
+    const related = t.relatedType ? `${t.relatedType}: ${t.relatedId}` : 'General';
+    return `<div class="${bgColor} p-4 rounded-xl shadow-sm border-l-4 ${color} flex justify-between items-center transition list-item">
+      <div>
+        <p class="text-lg font-semibold text-gray-800">${t.title} <span class="text-sm font-normal text-gray-600">(${t.status})</span></p>
+        <p class="text-sm text-gray-500">Due: <strong>${formatDate(t.dueDate)}</strong> | Priority: ${t.priority} | Related: ${related}</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <select onchange="updateTaskStatus('${t.id}', this.value)" class="p-2 border rounded-lg text-sm bg-white">
+          ${['Open', 'In Progress', 'Complete'].map(s => `<option value="${s}" ${t.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <button onclick="openTaskModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="p-4 bg-white rounded-lg">No tasks scheduled.</p>';
+};
+window.updateTaskStatus = (id, status) => updateEntity('tasks', { id, status });
+
+const renderCaseList = () => {
+  const container = document.getElementById('case-list-container');
+  if (!container) return;
+  const sortedCases = [...state.cases].sort((a, b) => ({ 'High': 3, 'Medium': 2, 'Low': 1 }[b.priority] - { 'High': 3, 'Medium': 2, 'Low': 1 }[a.priority]));
+  container.innerHTML = sortedCases.map(c => {
+    const contact = state.contacts.find(con => con.id === c.contactId);
+    const statusColor = c.status === 'Resolved' || c.status === 'Closed' ? 'border-green-500' : c.status === 'Open' ? 'border-red-500' : 'border-yellow-500';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${statusColor} flex justify-between items-center transition list-item">
+      <div>
+        <p class="text-lg font-semibold text-gray-800">${c.subject}</p>
+        <p class="text-sm text-gray-500">Customer: ${contact ? `${contact.firstName} ${contact.lastName}` : 'N/A'} | Agent: ${c.agentId}</p>
+        <p class="text-xs text-gray-500">Opened: ${formatDateTime(c.timeOpened)} | Priority: ${c.priority}</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-sm font-medium px-3 py-1 rounded-full ${c.status === 'Open' ? 'bg-red-500' : 'bg-blue-500'} text-white">${c.status}</span>
+        <button onclick="openCaseModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="p-4 bg-white rounded-lg">No support cases currently open. Great service!</p>';
+};
+
+const renderDashboard = () => {
+  const totalCustomers = state.companies.filter(c => c.status === 'Customer').length;
+  const totalOpenTasks = state.tasks.filter(t => t.status !== 'Complete').length;
+  const totalRevenue = state.orders.reduce((sum, order) => sum + order.total, 0);
+  const totalOpenCases = state.cases.filter(c => c.status !== 'Closed' && c.status !== 'Resolved').length;
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600"><p class="text-sm text-gray-500">Total Customers</p><h3 class="text-3xl font-bold mt-1 text-blue-600">${totalCustomers}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600"><p class="text-sm text-gray-500">Total Revenue</p><h3 class="text-3xl font-bold mt-1 text-green-600">${formatCurrency(totalRevenue)}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500"><p class="text-sm text-gray-500">Open Tasks</p><h3 class="text-3xl font-bold mt-1 text-yellow-500">${totalOpenTasks}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600"><p class="text-sm text-gray-500">Open Support Cases</p><h3 class="text-3xl font-bold mt-1 text-red-600">${totalOpenCases}</h3></div>`;
+  const overdueTasks = state.tasks.filter(t => isOverdue(t.dueDate, t.status));
+  const overdueList = document.getElementById('overdue-tasks-list');
+  overdueList.innerHTML = overdueTasks.length > 0 ? overdueTasks.map(t => `<li class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center">
+    <div><p class="font-medium text-red-700">${t.title}</p><p class="text-sm text-red-500">Due: ${formatDate(t.dueDate)}</p></div>
+    <button onclick="openTaskModal('${t.id}')" class="text-red-700 hover:text-red-900 text-sm font-medium">Edit</button></li>`).join('') : '<p class="text-gray-500">No overdue tasks. Great job!</p>';
+};
+
+const renderCompanies = (isCustomerView = false) => {
+  const container = isCustomerView ? document.getElementById('customer-list') : document.getElementById('company-list');
+  if (!container) return;
+  let list = state.companies;
+  if (isCustomerView) list = list.filter(c => c.status === 'Customer');
+  const sortedList = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  container.innerHTML = sortedList.map(c => `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+    <div>
+      <p class="text-lg font-semibold text-gray-800">${c.name} 
+        <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${c.status === 'Customer' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">${c.status}</span>
+        <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-yellow-100 text-yellow-700">${c.customerTier || 'None'}</span>
+      </p>
+      <p class="text-sm text-gray-500">Owner: ${c.owner || 'N/A'} | Revenue: ${formatCurrency(c.revenue)}</p>
+    </div>
+    <button onclick="openCompanyModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+  </div>`).join('') || '<p class="p-4 bg-white rounded-lg">No records found.</p>';
+};
+
+const renderContacts = () => {
+  const container = document.getElementById('contact-list');
+  if (!container) return;
+  const sortedList = [...state.contacts].sort((a, b) => a.lastName.localeCompare(b.lastName));
+  container.innerHTML = sortedList.map(c => {
+    const companyName = state.companies.find(comp => comp.id === c.companyId)?.name || 'Unassigned';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div>
+        <p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm font-normal text-gray-600">(${c.jobTitle || 'N/A'})</span></p>
+        <p class="text-sm text-gray-500">Company: ${companyName} | Mobile: ${c.mobile || 'N/A'}</p>
+        ${c.pickleballClub ? `<p class="text-xs font-medium text-purple-600 mt-1">🏓 Club: ${c.pickleballClub}</p>` : ''}
+      </div>
+      <div class="flex space-x-2">
+        <button onclick="openCaseModal(null, '${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
+        <button onclick="openContactModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="p-4 bg-white rounded-lg">No contacts found.</p>';
+};
+
+const renderOrderList = () => {
+  const container = document.getElementById('order-list');
+  if (!container) return;
+  if (state.orders.length === 0) {
+    container.innerHTML = '<p class="p-4 bg-white rounded-lg">No orders yet. Click "New Phone Order" to add one.</p>';
+    return;
+  }
+  const sortedOrders = [...state.orders].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+  container.innerHTML = sortedOrders.map(o => {
+    const company = state.companies.find(c => c.id === o.companyId);
+    const statusClass = o.status === 'Delivered' ? 'bg-green-100 text-green-700' : o.status === 'Shipped' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div>
+        <p class="text-lg font-semibold text-gray-800">#${o.id.slice(0,6)} – ${company ? company.name : 'N/A'}</p>
+        <p class="text-sm text-gray-500">Date: ${formatDate(o.orderDate)} | Total: ${formatCurrency(o.total)}</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="px-3 py-1 rounded-full text-xs font-medium ${statusClass}">${o.status}</span>
+        <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+      </div>
     </div>`;
   }).join('');
 };
 
-/* ==================== FULL ORDER ENTRY MODAL ==================== */
 window.openOrderEntryModal = (id = null) => {
   const order = id ? state.orders.find(o => o.id === id) : {};
   const isEdit = !!id;
-
+  currentCart = order.lines || [];
+  selectedCustomer = state.contacts.find(c => c.id === order.contactId) || null;
   let html = `
-    <form onsubmit="event.preventDefault(); saveOrder(this, '${id||''}');" class="space-y-6">
-      
-      <!-- 1. CUSTOMER & ACCOUNT INFO -->
+    <form onsubmit="event.preventDefault(); saveOrder(this, '${id || ''}');" class="space-y-6">
       <div class="bg-gray-50 p-4 rounded-lg">
         <h3 class="font-bold text-lg mb-3">1. Customer & Account Information</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium">Search Customer (Name/Email/Phone)</label>
-            <input type="text" id="customer-search" placeholder="Type to search..." class="w-full p-2 border rounded mt-1" oninput="searchCustomers(this.value)">
+            <input type="text" id="customer-search" placeholder="Type to search..." class="w-full p-2 border rounded mt-1" value="${selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}` : ''}" oninput="searchCustomers(this.value)">
             <div id="search-results" class="search-results mt-1"></div>
           </div>
           <div>
             <label class="block text-sm font-medium">Agent Name/ID</label>
-            <input type="text" value="Agent JT101" readonly class="w-full p-2 border rounded bg-gray-100 mt-1">
+            <input type="text" value="JT101" readonly class="w-full p-2 border rounded bg-gray-100 mt-1">
           </div>
           <div>
-            <label class="block text-sm font-medium">Order Source</label>
+            <label class="block text-sm font-medium">Order Source/Channel</label>
             <select class="w-full p-2 border rounded mt-1">
               <option>Phone Order</option>
               <option>Customer Service</option>
@@ -201,213 +565,226 @@ window.openOrderEntryModal = (id = null) => {
             </select>
           </div>
         </div>
-        <div id="customer-info" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <div id="customer-info" class="mt-4 p-3 bg-blue-50 rounded">${selectedCustomer ? `
+          <p><strong>Full Name:</strong> ${selectedCustomer.firstName} ${selectedCustomer.lastName}</p>
+          <p><strong>Email:</strong> ${selectedCustomer.email}</p>
+          <p><strong>Phone:</strong> ${selectedCustomer.phone}</p>
+          <p><strong>Company:</strong> ${state.companies.find(co => co.id === selectedCustomer.companyId)?.name || 'N/A'}</p>` : '<p class="text-gray-500">Select a customer to auto-fill.</p>'}</div>
       </div>
-
-      <!-- 2. PRODUCT & ORDER DETAILS -->
       <div class="bg-gray-50 p-4 rounded-lg">
         <h3 class="font-bold text-lg mb-3">2. Product & Order Details</h3>
+        <div class="relative mb-3">
+          <input type="text" id="product-search" placeholder="Search SKU or Name..." class="w-full p-2 border rounded" oninput="searchProducts(this.value)">
+          <div id="product-results" class="absolute z-10 bg-white border w-full mt-1 max-h-48 overflow-y-auto hidden"></div>
+        </div>
+        <div id="cart-items" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
+        <div class="flex justify-between font-semibold text-lg">
+          <span>Subtotal:</span> <span id="subtotal">${formatCurrency(currentCart.reduce((s, i) => s + (state.inventory.find(p => p.id === i.productId)?.unitPrice || 0) * i.qty, 0))}</span>
+        </div>
         <div class="flex gap-2 mb-3">
-          <input type="text" id="product-search" placeholder="Search SKU or Name..." class="flex-1 p-2 border rounded" oninput="searchProducts(this.value)">
-          <button type="button" onclick="addProductToCart()" class="px-4 py-2 bg-blue-600 text-white rounded">Add</button>
+          <input type="text" id="discount-code" placeholder="Discount/Coupon Code" class="flex-1 p-2 border rounded">
+          <button type="button" onclick="applyDiscount()" class="px-4 py-2 bg-yellow-600 text-white rounded">Apply</button>
         </div>
-        <div id="cart-items" class="space-y-2 mb-4"></div>
-        <div class="flex justify-between font-semibold">
-          <span>Subtotal:</span> <span id="subtotal">$0.00</span>
-        </div>
-        <div class="flex gap-2">
-          <input type="text" placeholder="Discount Code" class="flex-1 p-2 border rounded">
-          <button type="button" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm">Apply</button>
-        </div>
-        <div class="mt-2">
-          <label><input type="checkbox"> Gift Wrap (+$5.00)</label>
-          <input type="text" placeholder="Gift Message" class="ml-4 p-1 border rounded text-sm">
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center"><input type="checkbox" id="gift-wrap" class="mr-1"> Gift Wrap (+$5.00)</label>
+          <input type="text" id="gift-message" placeholder="Gift Message" class="p-2 border rounded flex-1">
         </div>
       </div>
-
-      <!-- 3. SHIPPING & FULFILLMENT -->
       <div class="bg-gray-50 p-4 rounded-lg">
         <h3 class="font-bold text-lg mb-3">3. Shipping & Fulfillment</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" placeholder="Recipient Name" required class="p-2 border rounded">
-          <input type="text" placeholder="Street Address" required class="p-2 border rounded">
-          <input type="text" placeholder="City" required class="p-2 border rounded">
-          <input type="text" placeholder="State/Province" required class="p-2 border rounded">
-          <input type="text" placeholder="Zip/Postal Code" required class="p-2 border rounded">
-          <input type="text" placeholder="Country" value="USA" required class="p-2 border rounded">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+          <input type="text" id="ship-name" placeholder="Recipient Name" required class="p-2 border rounded" value="${selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}` : ''}">
+          <input type="text" id="ship-street" placeholder="Street Address" required class="p-2 border rounded">
+          <input type="text" id="ship-city" placeholder="City" required class="p-2 border rounded">
+          <input type="text" id="ship-state" placeholder="State/Province" required class="p-2 border rounded">
+          <input type="text" id="ship-zip" placeholder="Zip/Postal Code" required class="p-2 border rounded">
+          <input type="text" id="ship-country" placeholder="Country" value="USA" required class="p-2 border rounded">
         </div>
-        <div class="mt-3">
-          <label class="block font-medium">Shipping Method</label>
-          <select class="w-full p-2 border rounded mt-1" onchange="updateShippingCost(this.value)">
+        <div class="mb-3">
+          <label class="block text-sm font-medium">Shipping Method</label>
+          <select id="shipping-method" class="w-full p-2 border rounded" onchange="updateShippingCost()">
             <option value="5.99">Standard (3-5 days) – $5.99</option>
             <option value="12.99">Expedited (2 days) – $12.99</option>
             <option value="29.99">Next Day – $29.99</option>
           </select>
         </div>
-        <div class="mt-2 text-right font-semibold">
-          Shipping: <span id="shipping-cost">$5.99</span>
+        <div class="text-right font-semibold mb-3">
+          Shipping Cost: <span id="shipping-cost">$5.99</span>
         </div>
-        <textarea placeholder="Internal Fulfillment Notes" class="w-full p-2 border rounded mt-3"></textarea>
+        <textarea id="fulfillment-notes" placeholder="Internal Fulfillment Notes (e.g., discreet packaging)" class="w-full p-2 border rounded" rows="2"></textarea>
       </div>
-
-      <!-- 4. PAYMENT & FINALIZATION -->
       <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">4. Payment & Finalization</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 class="font-bold text-lg mb-3">4. Payment & Order Finalization</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           <div>
-            <label class="block font-medium">Payment Method</label>
-            <select class="w-full p-2 border rounded mt-1">
+            <label class="block text-sm font-medium">Payment Method</label>
+            <select id="payment-method" class="w-full p-2 border rounded">
               <option>Credit Card</option>
               <option>Debit Card</option>
               <option>Gift Card</option>
+              <option>Loyalty Points</option>
               <option>Account Credit</option>
             </select>
           </div>
           <div>
-            <label><input type="checkbox" checked> Same as Shipping Address</label>
+            <label class="flex items-center"><input type="checkbox" id="same-billing" checked class="mr-1"> Same as Shipping Address</label>
           </div>
         </div>
-        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded">
-          <p class="text-sm"><strong>Secure Payment:</strong> Use PCI-compliant gateway. Card details not stored.</p>
+        <div id="billing-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 hidden">
+          <input type="text" placeholder="Billing Street Address" class="p-2 border rounded">
+          <input type="text" placeholder="Billing City" class="p-2 border rounded">
+          <input type="text" placeholder="Billing State/Province" class="p-2 border rounded">
+          <input type="text" placeholder="Billing Zip/Postal Code" class="p-2 border rounded">
+          <input type="text" placeholder="Billing Country" value="USA" class="p-2 border rounded">
         </div>
-        <div class="mt-4 flex justify-between items-center font-bold text-lg">
-          <span>Total Charged:</span>
-          <span id="final-total">$0.00</span>
+        <div class="p-3 bg-yellow-50 border border-yellow-300 rounded mb-3">
+          <p class="text-sm">Secure Payment: Enter card details in PCI-compliant gateway. Agent does not see raw numbers.</p>
         </div>
-        <div class="mt-4">
-          <label><input type="checkbox" required> I confirm I have customer authorization to charge.</label>
+        <div class="flex justify-between items-center font-bold text-lg mb-3">
+          <span>Total Charged:</span> <span id="final-total">$0.00</span>
         </div>
+        <label class="flex items-center"><input type="checkbox" id="confirmation" required class="mr-1"> I confirm customer authorization and read T&Cs/Return Policy.</label>
       </div>
-
-      <div class="flex justify-end space-x-3 mt-6">
+      <div class="flex justify-end space-x-3">
         <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium">Save Order</button>
         <button type="button" onclick="closeUniversalModal()" class="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>
       </div>
     </form>`;
-
-  openUniversalModal(isEdit ? 'Edit Order' : 'New Assisted Order', html);
-  if (isEdit) loadOrderIntoForm(order);
-  else initNewOrderForm();
-};
-
-/* ==================== ORDER FORM LOGIC ==================== */
-let currentCart = [];
-let selectedCustomer = null;
-
-const initNewOrderForm = () => {
-  currentCart = [];
-  selectedCustomer = null;
+  openUniversalModal(id ? 'Edit Order' : 'New Assisted Order', html);
   updateCartDisplay();
   updateTotals();
+  if (selectedCustomer) searchCustomers(`${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
+  document.getElementById('same-billing').onchange = e => document.getElementById('billing-fields').classList.toggle('hidden', e.target.checked);
 };
 
-const searchCustomers = (query) => {
+const searchCustomers = query => {
   const results = document.getElementById('search-results');
   if (!query.trim()) { results.innerHTML = ''; return; }
   const matches = state.contacts.filter(c => 
-    c.firstName.toLowerCase().includes(query.toLowerCase()) ||
-    c.lastName.toLowerCase().includes(query.toLowerCase()) ||
-    c.email.toLowerCase().includes(query.toLowerCase()) ||
-    c.phone.includes(query)
-  ).slice(0, 5);
-  results.innerHTML = matches.map(c => `
-    <div class="p-2 search-result" onclick="selectCustomer('${c.id}')">
-      ${c.firstName} ${c.lastName} – ${c.email} (${c.phone})
-    </div>`).join('') || '<div class="p-2 text-gray-500">No matches</div>';
+    c.firstName.toLowerCase().includes(query.toLowerCase()) || c.lastName.toLowerCase().includes(query.toLowerCase()) ||
+    c.email.toLowerCase().includes(query.toLowerCase()) || c.phone.includes(query)
+  ).slice(0,5);
+  results.innerHTML = matches.map(c => `<div class="p-2 search-result" onclick="selectCustomer('${c.id}')">
+    ${c.firstName} ${c.lastName} – ${c.email} (${c.phone})</div>`).join('') || '<div class="p-2 text-gray-500">No matches</div>';
 };
-
-window.selectCustomer = (contactId) => {
+window.selectCustomer = contactId => {
   selectedCustomer = state.contacts.find(c => c.id === contactId);
-  const company = state.companies.find(co => co.id === selectedCustomer.companyId) || {};
   document.getElementById('customer-search').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
   document.getElementById('search-results').innerHTML = '';
+  const company = state.companies.find(co => co.id === selectedCustomer.companyId);
   document.getElementById('customer-info').innerHTML = `
-    <div><strong>Company:</strong> ${company.name || 'N/A'}</div>
-    <div><strong>Email:</strong> ${selectedCustomer.email}</div>
-    <div><strong>Phone:</strong> ${selectedCustomer.phone}</div>
-    <div><strong>Shipping Address:</strong> Use saved address</div>`;
+    <p><strong>Full Name:</strong> ${selectedCustomer.firstName} ${selectedCustomer.lastName}</p>
+    <p><strong>Email:</strong> ${selectedCustomer.email}</p>
+    <p><strong>Phone:</strong> ${selectedCustomer.phone}</p>
+    <p><strong>Company:</strong> ${company ? company.name : 'N/A'}</p>`;
+  // Auto-fill shipping
+  document.getElementById('ship-name').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+  // Assume saved address; in real app, pull from profile
 };
-
-const searchProducts = (query) => {
-  const results = document.createElement('div');
-  results.className = 'absolute bg-white border mt-1 w-full z-10 max-h-48 overflow-y-auto';
-  if (!query.trim()) { document.body.appendChild(results); return; }
-  const matches = state.inventory.filter(p => 
-    p.id.toLowerCase().includes(query.toLowerCase()) ||
-    p.name.toLowerCase().includes(query.toLowerCase())
-  );
-  results.innerHTML = matches.map(p => `
-    <div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="selectProduct('${p.id}')">
-      [${p.id}] ${p.name} – $${p.unitPrice} (Stock: ${p.availableQty})
-    </div>`).join('');
-  document.getElementById('product-search').parentNode.appendChild(results);
+const searchProducts = query => {
+  const results = document.getElementById('product-results');
+  if (!query.trim()) { results.classList.add('hidden'); return; }
+  const matches = state.inventory.filter(p => p.id.toLowerCase().includes(query.toLowerCase()) || p.name.toLowerCase().includes(query.toLowerCase()));
+  results.innerHTML = matches.map(p => `<div class="p-2 search-result" onclick="addToCart('${p.id}')">
+    ${p.name} (${p.id}) – $${p.unitPrice} (Stock: ${p.availableQty})</div>`).join('') || '<div class="p-2 text-gray-500">No products</div>';
+  results.classList.remove('hidden');
 };
-
-window.selectProduct = (productId) => {
+window.addToCart = productId => {
   const product = state.inventory.find(p => p.id === productId);
-  currentCart.push({ productId, qty: 1, price: product.unitPrice });
+  currentCart.push({productId, qty: 1});
+  document.getElementById('product-search').value = '';
+  document.getElementById('product-results').classList.add('hidden');
   updateCartDisplay();
   updateTotals();
-  document.getElementById('product-search').value = '';
-  document.querySelectorAll('.absolute').forEach(el => el.remove());
 };
-
 const updateCartDisplay = () => {
   const container = document.getElementById('cart-items');
-  container.innerHTML = currentCart.map((item, i) => {
-    const prod = state.inventory.find(p => p.id === item.productId);
-    return `<div class="flex items-center gap-2 p-2 bg-white border rounded">
-      <span class="flex-1">${prod.name}</span>
-      <input type="number" min="1" value="${item.qty}" class="w-16 p-1 border rounded" onchange="updateQty(${i}, this.value)">
-      <span>× $${item.price}</span>
-      <button type="button" onclick="removeFromCart(${i})" class="text-red-600">×</button>
+  container.innerHTML = currentCart.map((item, index) => {
+    const product = state.inventory.find(p => p.id === item.productId);
+    return `<div class="flex items-center justify-between p-2 bg-white border rounded">
+      <span>${product.name} (${product.id})</span>
+      <input type="number" min="1" max="${product.availableQty}" value="${item.qty}" onchange="updateCartQty(${index}, this.value)" class="w-16 p-1 border rounded mx-2">
+      <span class="font-semibold">${formatCurrency(product.unitPrice * item.qty)}</span>
+      <button onclick="removeFromCart(${index})" class="text-red-600 ml-2">Remove</button>
     </div>`;
-  }).join('') || '<p class="text-gray-500">No items in cart</p>';
+  }).join('') || '<p class="text-gray-500 p-2">Cart empty</p>';
 };
-
-window.updateQty = (index, qty) => {
+window.updateCartQty = (index, qty) => {
   currentCart[index].qty = parseInt(qty) || 1;
+  updateCartDisplay();
   updateTotals();
 };
-window.removeFromCart = (index) => {
+window.removeFromCart = index => {
   currentCart.splice(index, 1);
   updateCartDisplay();
   updateTotals();
 };
-
-const updateTotals = () => {
-  const subtotal = currentCart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shipping = parseFloat(document.querySelector('[onchange="updateShippingCost"]').value) || 5.99;
-  const total = subtotal + shipping;
-  document.getElementById('subtotal').textContent = formatCurrency(subtotal);
-  document.getElementById('final-total').textContent = formatCurrency(total);
-};
-
-window.updateShippingCost = (cost) => {
-  document.getElementById('shipping-cost').textContent = formatCurrency(cost);
+const applyDiscount = () => {
+  const code = document.getElementById('discount-code').value;
+  // Mock discount logic
+  if (code === 'SAVE10') {
+    // Apply 10% off – in real, calculate
+    alert('10% discount applied!');
+  }
   updateTotals();
 };
-
-window.saveOrder = (form, id) => {
-  const order = {
-    id: id || uuid(),
+const updateTotals = () => {
+  const subtotal = currentCart.reduce((sum, item) => sum + (state.inventory.find(p => p.id === item.productId)?.unitPrice || 0) * item.qty, 0);
+  const giftWrap = document.getElementById('gift-wrap').checked ? 5.00 : 0;
+  const shipping = parseFloat(document.getElementById('shipping-method').value) || 0;
+  const total = subtotal + giftWrap + shipping;
+  document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+  document.getElementById('shipping-cost').textContent = formatCurrency(shipping);
+  document.getElementById('final-total').textContent = formatCurrency(total);
+};
+window.saveOrder = form => {
+  if (!document.getElementById('confirmation').checked) return alert('Please confirm authorization.');
+  const orderData = {
+    id: uuid(),
     customerId: selectedCustomer?.companyId,
     contactId: selectedCustomer?.id,
-    items: currentCart,
-    subtotal: currentCart.reduce((s,i)=>s+i.price*i.qty,0),
-    shippingCost: parseFloat(form.querySelector('[onchange="updateShippingCost"]').value),
-    total: currentCart.reduce((s,i)=>s+i.price*i.qty,0) + parseFloat(form.querySelector('[onchange="updateShippingCost"]').value),
+    lines: currentCart,
+    subtotal: currentCart.reduce((s, i) => s + (state.inventory.find(p => p.id === i.productId)?.unitPrice || 0) * i.qty, 0),
+    shippingCost: parseFloat(document.getElementById('shipping-method').value),
+    total: 0, // Calculate on save
     status: 'Pending',
     orderDate: new Date().toISOString(),
-    agentId: 'JT101',
-    source: form.querySelector('select').value,
-    notes: form.querySelector('textarea').value
+    shippingName: document.getElementById('ship-name').value,
+    shippingAddress: {
+      street: document.getElementById('ship-street').value,
+      city: document.getElementById('ship-city').value,
+      state: document.getElementById('ship-state').value,
+      zip: document.getElementById('ship-zip').value,
+      country: document.getElementById('ship-country').value
+    },
+    paymentMethod: document.getElementById('payment-method').value,
+    fulfillmentNotes: document.getElementById('fulfillment-notes').value,
+    giftWrap: document.getElementById('gift-wrap').checked,
+    giftMessage: document.getElementById('gift-message').value,
+    agentId: 'JT101'
   };
-  updateEntity('orders', order);
+  orderData.total = orderData.subtotal + orderData.shippingCost + (orderData.giftWrap ? 5 : 0);
+  updateEntity('orders', orderData);
   closeUniversalModal();
 };
 
-/* ==================== INIT ==================== */
+// Placeholder modals for other sections (expand as needed)
+window.openCompanyModal = () => openUniversalModal('Add Company', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="Company Name" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');
+window.openContactModal = () => openUniversalModal('Add Contact', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="First Name" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');
+window.openTaskModal = () => openUniversalModal('Add Task', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="Task Title" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');
+window.openCaseModal = () => openUniversalModal('New Case', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="Subject" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded">Save</button></form>');
+
+window.exportData = () => {
+  const dataStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'acoustiskin_crm_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   setupNavigation();

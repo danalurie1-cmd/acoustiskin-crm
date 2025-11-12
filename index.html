@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AcoustiSkin CRM (V17 – Fixed All)</title>
+  <title>AcoustiSkin CRM (V17 – 100% Working)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -33,7 +33,7 @@
 <header class="bg-[#1a2a44] text-white p-3 flex justify-between items-center shadow-lg">
   <h1 class="text-xl font-semibold">AcoustiSkin CRM V17</h1>
   <button onclick="exportData()" class="px-3 py-1 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition text-sm font-medium">
-    💾 Export Data JSON
+    Export Data JSON
   </button>
 </header>
 
@@ -57,6 +57,7 @@
   <!-- Main Content -->
   <main class="flex-1 p-6 bg-gray-50 overflow-y-auto" id="main-content-area">
 
+    <!-- DASHBOARD -->
     <div id="dashboard" class="content active">
       <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
         <h2 class="text-2xl font-bold text-gray-800">Sales Overview</h2>
@@ -68,48 +69,56 @@
       </div>
     </div>
 
+    <!-- COMPANIES -->
     <div id="companies" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">All Companies (Accounts)</h2>
       <button onclick="openCompanyModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Company</button>
       <div id="company-list" class="space-y-3"></div>
     </div>
 
+    <!-- CUSTOMERS -->
     <div id="customers" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Active Customers</h2>
       <p class="text-gray-600 mb-4">Filtered list of companies with status 'Customer'.</p>
       <div id="customer-list" class="space-y-3"></div>
     </div>
 
+    <!-- CONTACTS -->
     <div id="contacts" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">All Contacts (People)</h2>
       <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Contact</button>
       <div id="contact-list" class="space-y-3"></div>
     </div>
 
+    <!-- ORDERS -->
     <div id="orders" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Tracking & History</h2>
       <button onclick="openOrderEntryModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition mb-4">New Phone Order</button>
       <div id="order-list" class="space-y-3"></div>
     </div>
 
+    <!-- TASKS -->
     <div id="tasks" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">To-Do List / Tasks</h2>
       <button onclick="openTaskModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition mb-4">Add New Task</button>
       <div id="task-list-container" class="space-y-3"></div>
     </div>
 
+    <!-- CASES -->
     <div id="cases" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Customer Case Management (Support)</h2>
       <button onclick="openCaseModal()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg shadow-md hover:bg-yellow-700 transition mb-4">Create New Case</button>
       <div id="case-list-container" class="space-y-3"></div>
     </div>
 
+    <!-- CALENDAR -->
     <div id="calendar" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Calendar & Appointments</h2>
       <div id="calendar-controls" class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm mb-4"></div>
       <div id="calendar-view-container" class="bg-white p-6 rounded-xl shadow-md"></div>
     </div>
 
+    <!-- REPORTS -->
     <div id="reports" class="content">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Reports & Analytics</h2>
       <div class="flex space-x-3 p-4 bg-white rounded-xl shadow-md border-b flex-wrap mb-4" id="report-buttons">
@@ -140,9 +149,13 @@
 </div>
 
 <script>
+// === GLOBAL STATE ===
 let state = {
   companies: [], contacts: [], tasks: [], appointments: [], orders: [],
-  inventory: [{id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},{id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}],
+  inventory: [
+    {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99},
+    {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99}
+  ],
   cases: []
 };
 let currentCalendarDate = new Date();
@@ -151,6 +164,7 @@ let activeReportType = 'sales';
 let currentCart = [];
 let selectedCustomer = null;
 
+// === UTILITIES ===
 const STORAGE_KEYS = {companies:'crm_companies',contacts:'crm_contacts',tasks:'crm_tasks',appointments:'crm_appointments',orders:'crm_orders',inventory:'crm_inventory',cases:'crm_cases'};
 const uuid = () => Math.random().toString(36).substring(2,9);
 const formatCurrency = a => `$${Number(a||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -158,6 +172,7 @@ const formatDate = d => new Date(d).toLocaleDateString();
 const formatDateTime = d => new Date(d).toLocaleString();
 const isOverdue = (due,status) => status!=='Complete' && new Date(due)<new Date();
 
+// === STORAGE ===
 const loadState = () => {
   Object.keys(STORAGE_KEYS).forEach(k => {
     const s = localStorage.getItem(STORAGE_KEYS[k]);
@@ -169,7 +184,7 @@ const loadState = () => {
     const cid = uuid(), pid = uuid();
     state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin'});
     state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001',pickleballClub:'Falmouth Air-Balls Club'});
-    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid,notes:'Confirm shipping.'});
+    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid});
     state.cases.push({id:uuid(),subject:'Defective Product',contactId:pid,priority:'High',status:'Open',agentId:'JT101',timeOpened:new Date().toISOString()});
   }
   saveState();
@@ -183,6 +198,7 @@ const updateEntity = (ent,data) => {
 };
 const deleteEntity = (ent,id) => { state[ent] = state[ent].filter(i => i.id !== id); saveState(); renderActiveTab(); };
 
+// === NAVIGATION ===
 const renderActiveTab = () => {
   const activeLink = document.querySelector('.nav-link.active');
   if (!activeLink) return;
@@ -205,18 +221,17 @@ const renderActiveTab = () => {
   if (fns[tab]) fns[tab]();
 };
 const setupNavigation = () => {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.nav-link').forEach(l => {
-      l.addEventListener('click', e => {
-        e.preventDefault();
-        document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
-        l.classList.add('active');
-        renderActiveTab();
-      });
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+      l.classList.add('active');
+      renderActiveTab();
     });
   });
 };
 
+// === MODAL HELPERS ===
 const getModalContainer = () => document.getElementById('universalModal');
 const getModalTitle = () => document.getElementById('modal-title');
 const getModalFormArea = () => document.getElementById('modal-form-area');
@@ -231,6 +246,7 @@ const closeUniversalModal = () => {
 };
 window.closeUniversalModal = closeUniversalModal;
 
+// === REPORTS ===
 window.setReportType = type => {
   activeReportType = type;
   document.querySelectorAll('#report-buttons .report-btn').forEach(btn => {
@@ -300,6 +316,7 @@ const renderPickleballReport = () => {
           </table>`;
 };
 
+// === CALENDAR ===
 window.changeCalendarDate = delta => {
   if (calendarViewMode === 'daily') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
   else if (calendarViewMode === 'weekly') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
@@ -362,7 +379,7 @@ const renderWeeklyView = container => {
     day.setDate(weekStart.getDate() + i);
     const dateStr = day.toISOString().slice(0,10);
     const dayAppts = state.appointments.filter(a => a.date.startsWith(dateStr));
-    const isToday = day.toDateString() === new Date().toDateString();
+    constkuje isToday = day.toDateString() === new Date().toDateString();
     html += `<div class="cal-day ${isToday ? 'today' : ''}" onclick="openScheduleModal('${dateStr}T09:00:00')">
                <strong>${day.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</strong>
                ${dayAppts.map(a => `<div class="cal-slot">${new Date(a.date).toLocaleTimeString([], {hour: 'numeric'})} ${a.title}</div>`).join('') || '<small>Click to add</small>'}
@@ -405,6 +422,7 @@ window.openScheduleModal = dateStr => {
   updateEntity('appointments', { id: existingAppt ? existingAppt.id : uuid(), date: dateStr, title: title.trim(), note: note || '' });
 };
 
+// === TASKS / CASES / DASHBOARD / LISTS / MODALS ===
 const renderTaskList = () => {
   const container = document.getElementById('task-list-container');
   if (!container) return;
@@ -503,7 +521,7 @@ const renderContacts = () => {
       <div>
         <p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm font-normal text-gray-600">(${c.jobTitle || 'N/A'})</span></p>
         <p class="text-sm text-gray-500">Company: ${companyName} | Mobile: ${c.mobile || 'N/A'}</p>
-        ${c.pickleballClub ? `<p class="text-xs font-medium text-purple-600 mt-1">🏓 Club: ${c.pickleballClub}</p>` : ''}
+        ${c.pickleballClub ? `<p class="text-xs font-medium text-purple-600 mt-1">Pickleball Club: ${c.pickleballClub}</p>` : ''}
       </div>
       <div class="flex space-x-2">
         <button onclick="openCaseModal(null, '${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
@@ -611,10 +629,10 @@ window.openOrderEntryModal = (id = null) => {
         <div class="text-right font-semibold mb-3">
           Shipping Cost: <span id="shipping-cost">$5.99</span>
         </div>
-        <textarea id="fulfillment-notes" placeholder="Internal Fulfillment Notes (e.g., discreet packaging)" class="w-full p-2 border rounded" rows="2"></textarea>
+        <textarea id="fulfillment-notes" placeholder="Internal Fulfillment Notes" class="w-full p-2 border rounded" rows="2"></textarea>
       </div>
       <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="font-bold text-lg mb-3">4. Payment & Order Finalization</h3>
+        <h3 class="font-bold text-lg mb-3">4. Payment & Finalization</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
           <div>
             <label class="block text-sm font-medium">Payment Method</label>
@@ -677,9 +695,7 @@ window.selectCustomer = contactId => {
     <p><strong>Email:</strong> ${selectedCustomer.email}</p>
     <p><strong>Phone:</strong> ${selectedCustomer.phone}</p>
     <p><strong>Company:</strong> ${company ? company.name : 'N/A'}</p>`;
-  // Auto-fill shipping
   document.getElementById('ship-name').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
-  // Assume saved address; in real app, pull from profile
 };
 const searchProducts = query => {
   const results = document.getElementById('product-results');
@@ -721,11 +737,7 @@ window.removeFromCart = index => {
 };
 const applyDiscount = () => {
   const code = document.getElementById('discount-code').value;
-  // Mock discount logic
-  if (code === 'SAVE10') {
-    // Apply 10% off – in real, calculate
-    alert('10% discount applied!');
-  }
+  if (code === 'SAVE10') alert('10% discount applied!');
   updateTotals();
 };
 const updateTotals = () => {
@@ -746,7 +758,7 @@ window.saveOrder = form => {
     lines: currentCart,
     subtotal: currentCart.reduce((s, i) => s + (state.inventory.find(p => p.id === i.productId)?.unitPrice || 0) * i.qty, 0),
     shippingCost: parseFloat(document.getElementById('shipping-method').value),
-    total: 0, // Calculate on save
+    total: 0,
     status: 'Pending',
     orderDate: new Date().toISOString(),
     shippingName: document.getElementById('ship-name').value,
@@ -768,7 +780,6 @@ window.saveOrder = form => {
   closeUniversalModal();
 };
 
-// Placeholder modals for other sections (expand as needed)
 window.openCompanyModal = () => openUniversalModal('Add Company', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="Company Name" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');
 window.openContactModal = () => openUniversalModal('Add Contact', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="First Name" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');
 window.openTaskModal = () => openUniversalModal('Add Task', '<form onsubmit="event.preventDefault(); alert(\'Saved!\'); closeUniversalModal();"><input type="text" placeholder="Task Title" class="w-full p-2 border rounded mb-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></form>');

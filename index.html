@@ -16,6 +16,15 @@
         .customer-item:hover { background-color: #eff6ff; }
         .customer-item.active { background-color: #bfdbfe; font-weight: 600; border-left: 4px solid #4f46e5; }
         .loading-overlay { background: rgba(255, 255, 255, 0.8); z-index: 10; }
+        /* Style for the Edit Button */
+        .edit-button { 
+            background-color: #e5e7eb; 
+            color: #4b5563; 
+            border: 1px solid #d1d5db;
+        }
+        .edit-button:hover {
+             background-color: #d1d5db; 
+        }
     </style>
 </head>
 <body>
@@ -66,14 +75,18 @@
         <div class="flex-grow p-4 md:p-8 relative">
             
             <div id="order_form_container">
-                <!-- Order Creation Form Content (from previous steps) -->
                 
                 <!-- Header and Customer Context -->
                 <header class="mb-6 flex justify-between items-center border-b pb-4">
                     <h1 class="text-3xl font-bold text-gray-800">New Assisted Order</h1>
-                    <div class="text-right">
-                        <p class="text-lg font-semibold text-indigo-700" id="current_customer_name">Customer: Apex Solutions Corp</p>
-                        <p class="text-sm text-gray-500" id="current_customer_contact">Primary Contact: Jane Doe, jane.doe@apex.com</p>
+                    <div class="text-right flex items-end space-x-3">
+                        <button type="button" onclick="goToCustomerProfile()" class="edit-button font-semibold py-2 px-3 rounded-lg text-sm transition duration-150">
+                            Edit Customer Profile
+                        </button>
+                        <div>
+                            <p class="text-lg font-semibold text-indigo-700" id="current_customer_name">Customer: Apex Solutions Corp</p>
+                            <p class="text-sm text-gray-500" id="current_customer_contact">Primary Contact: Jane Doe, jane.doe@apex.com</p>
+                        </div>
                     </div>
                 </header>
                 
@@ -284,6 +297,12 @@
                 paymentTerm: 'wire'
             }
         };
+        
+        // --- NEW: Go to Customer Profile function ---
+        function goToCustomerProfile() {
+            // In a real CRM, this function would navigate the browser to the customer_profile.html equivalent page.
+            showNotification(`Navigating to Profile Editor for ${customerData[currentCustomerId].name}. All fields (addresses, contacts, terms) are editable there.`, 'bg-yellow-100 text-yellow-700');
+        }
 
         // Function to simulate customer loading
         function loadCustomer(customerId) {

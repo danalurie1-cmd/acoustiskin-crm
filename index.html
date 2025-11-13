@@ -1,103 +1,1182 @@
+November 13, 2025 CRM Backup
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified CRM Application</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Custom styles */
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar { width: 280px; }
-        .main-content { flex-grow: 1; }
-        .app-header { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .input-group label { font-weight: 500; font-size: 0.875rem; color: #4b5563; margin-bottom: 0.25rem; display: block; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
-        .card-header { cursor: pointer; user-select: none; }
-        .rotate-180 { transform: rotate(180deg); }
-        .collapse-icon { transition: transform 0.3s ease-in-out; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AcoustiSkin CRM – Enterprise V19</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary:#1a2a44; --secondary:#0070e0; --accent:#27ae60; --danger:#e74c3c; }
+    body { font-family:'Inter',sans-serif; background:#f4f6f9; }
+    .sidebar { background:#2c3e50; }
+    .nav-link { border-left:4px solid transparent; display:block; padding:8px 12px; margin-bottom:4px; color:#d1d5db; }
+    .nav-link:hover { background:#004b9940; }
+    .nav-link.active { background:#004b99 !important; border-left-color:var(--secondary)!important; color:white!important; }
+    .content { display:none; }
+    .content.active { display:block; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:50; justify-content:center; align-items:center; }
+    .modal.active { display:flex; }
+    .modal-content { max-width:1100px; max-height:95vh; overflow-y:auto; }
+    .list-item { transition:all .2s; }
+    .list-item:hover { transform:translateY(-2px); box-shadow:0 4px 6px rgba(0,0,0,.1); }
+    .cal-day { min-height:80px; border:1px solid #e5e7eb; padding:4px; cursor:pointer; }
+    .cal-day:hover { background:#f3f4f6; }
+    .cal-day.today { background:#dbeafe; }
+    .cal-slot { font-size:0.75rem; margin:1px 0; padding:1px 2px; border-radius:2px; }
+    .search-results { max-height:200px; overflow-y:auto; border:1px solid #ddd; background:white; }
+    .search-result:hover { background:#f0f0f0; cursor:pointer; }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen antialiased flex">
+<body class="h-screen flex flex-col">
 
-    <!-- Notification Bar -->
-    <div id="notification" class="fixed top-4 right-4 z-50 p-3 hidden rounded-lg shadow-xl text-sm font-medium transition-all duration-300" role="alert"></div>
+<header class="bg-[#1a2a44] text-white p-3 flex justify-between items-center shadow-lg">
+  <h1 class="text-xl font-semibold">AcoustiSkin CRM V19</h1>
+  <button onclick="exportData()" class="px-3 py-1 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition text-sm font-medium">
+    Export Data JSON
+  </button>
+</header>
 
-    <!-- Sidebar (Customer List) -->
-    <aside class="sidebar bg-indigo-700 text-white flex flex-col h-screen fixed">
-        <div class="p-6 text-2xl font-bold border-b border-indigo-600">
-            CRM Core
+<div class="flex flex-1 overflow-hidden">
+  <div class="w-60 bg-[#2c3e50] text-white p-4 flex flex-col space-y-6 sidebar">
+    <div class="text-xl font-bold text-white uppercase">AcoustiSkin V19</div>
+    <nav class="space-y-1" id="sidebar-nav">
+      <a href="#" class="nav-link active font-medium" data-tab="dashboard">Dashboard</a>
+      <a href="#" class="nav-link font-medium" data-tab="companies">Companies</a>
+      <a href="#" class="nav-link font-medium" data-tab="customers">Customers</a>
+      <a href="#" class="nav-link font-medium" data-tab="contacts">Contacts</a>
+      <a href="#" class="nav-link font-medium" data-tab="orders">Orders</a>
+      <a href="#" class="nav-link font-medium" data-tab="tasks">Tasks</a>
+      <a href="#" class="nav-link font-medium" data-tab="cases">Cases</a>
+      <a href="#" class="nav-link font-medium" data-tab="calendar">Calendar</a>
+      <a href="#" class="nav-link font-medium" data-tab="reports">Reports</a>
+    </nav>
+  </div>
+
+  <main class="flex-1 p-6 bg-gray-50 overflow-y-auto" id="main-content-area">
+
+    <div id="dashboard" class="content active">
+      <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
+        <h2 class="text-2xl font-bold text-gray-800">Sales Overview</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="dashboard-stats"></div>
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+          <h3 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Urgent: Overdue Tasks</h3>
+          <ul class="space-y-3" id="overdue-tasks-list"></ul>
         </div>
-        <div class="p-6">
-            <h3 class="text-sm font-semibold mb-2 text-indigo-300 uppercase tracking-wider">Navigation</h3>
-            <nav>
-                <a href="#" onclick="navigateTo('order-entry-view')" class="flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors duration-150">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    Order Entry
-                </a>
-                <a href="#" onclick="navigateTo('profile-editor-view')" class="flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors duration-150 mt-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h4a2 2 0 012 2v1"></path></svg>
-                    Profile Editor
-                </a>
-            </nav>
-        </div>
+      </div>
+    </div>
+
+    <div id="companies" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">All Companies</h2>
+      <button onclick="openCompanyModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add Company</button>
+      <div id="company-list" class="space-y-3"></div>
+    </div>
+
+    <div id="customers" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Active Customers</h2>
+      <div id="customer-list" class="space-y-3"></div>
+    </div>
+
+    <div id="contacts" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">All Contacts</h2>
+      <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add Contact</button>
+      <div id="contact-list" class="space-y-3"></div>
+    </div>
+
+    <div id="orders" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Entry & Tracking</h2>
+      <button onclick="openOrderEntryModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 mb-4">New Order</button>
+      <div id="order-list" class="space-y-3"></div>
+    </div>
+
+    <div id="tasks" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">To-Do List / Tasks</h2>
+      <button onclick="openTaskModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add Task</button>
+      <div id="task-list-container" class="space-y-3"></div>
+    </div>
+
+    <div id="cases" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Case Management</h2>
+      <button onclick="openCaseModal()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg shadow-md hover:bg-yellow-700 mb-4">New Case</button>
+      <div id="case-list-container" class="space-y-3"></div>
+    </div>
+
+    <div id="calendar" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Calendar & Appointments</h2>
+      <div id="calendar-controls" class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm mb-4"></div>
+      <div id="calendar-view-container" class="bg-white p-6 rounded-xl shadow-md"></div>
+    </div>
+
+    <div id="reports" class="content">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Reports & Analytics</h2>
+      <div class="flex space-x-3 p-4 bg-white rounded-xl shadow-md border-b mb-4" id="report-buttons">
+        <button onclick="setReportType('sales')" class="report-btn px-4 py-2 text-sm rounded-lg bg-blue-600 text-white">Sales</button>
+        <button onclick="setReportType('tasks')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Tasks</button>
+        <button onclick="setReportType('inventory')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Inventory</button>
+        <button onclick="setReportType('pickleball')" class="report-btn px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300">Pickleball</button>
+      </div>
+      <div id="report-output" class="bg-white p-6 rounded-xl shadow-md space-y-6"></div>
+    </div>
+
+  </main>
+</div>
+
+<div id="universalModal" class="modal">
+  <div class="bg-white rounded-xl shadow-2xl w-full modal-content p-6">
+    <div class="flex justify-between items-center pb-4 border-b">
+      <h2 class="text-xl font-semibold text-gray-800" id="modal-title">Modal</h2>
+      <button onclick="closeUniversalModal()" class="text-gray-400 hover:text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="modal-form-area"></div>
+  </div>
+</div>
+
+<script>
+/* ==================== GLOBAL STATE ==================== */
+let state = {
+  companies: [], contacts: [], tasks: [], appointments: [], orders: [],
+  inventory: [
+    {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99,variants:{size:['S','M','L','XL'],color:['Black','Blue']}},
+    {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99,variants:{size:['M','L'],color:['White']}}
+  ],
+  cases: []
+};
+let currentCalendarDate = new Date();
+let calendarViewMode = 'daily';
+let activeReportType = 'sales';
+let currentCart = [];
+let selectedCustomer = null;
+
+/* ==================== UTILITIES ==================== */
+const STORAGE_KEYS = {
+  companies:'crm_companies',contacts:'crm_contacts',tasks:'crm_tasks',
+  appointments:'crm_appointments',orders:'crm_orders',inventory:'crm_inventory',cases:'crm_cases'
+};
+const uuid = () => Math.random().toString(36).substring(2,9);
+const formatCurrency = a => `$${Number(a||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const formatDate = d => new Date(d).toLocaleDateString();
+const formatDateTime = d => new Date(d).toLocaleString(); 
+const isOverdue = (due,status) => status!=='Complete' && new Date(due)<new Date();
+const deleteEntity = (ent,id) => { 
+  state[ent] = state[ent].filter(i => i.id !== id);
+  saveState();
+  renderActiveTab();
+};
+
+/* ==================== STORAGE & INIT ==================== */
+const loadState = () => {
+  Object.keys(STORAGE_KEYS).forEach(k => {
+    const s = localStorage.getItem(STORAGE_KEYS[k]);
+    if (s) try { state[k] = JSON.parse(s); } catch (e) { console.error('Corrupt',k); }
+    else if (k === 'inventory') state[k] = [
+      {id:'PBA-001',name:'AcoustiSkin Classic',availableQty:100,unitPrice:19.99,variants:{size:['S','M','L','XL'],color:['Black','Blue']}},
+      {id:'PBA-002',name:'AcoustiSkin Pro',availableQty:50,unitPrice:29.99,variants:{size:['M','L'],color:['White']}}
+    ];
+    else state[k] = [];
+  });
+  if (state.companies.length === 0) {
+    const cid = uuid(), pid = uuid();
+    state.companies.push({id:cid,name:'Alpha Sound Systems',status:'Customer',customerTier:'Gold',revenue:50000,owner:'Admin',industry:'Tech',phone:'555-1212',address:'101 Elm St'});
+    state.contacts.push({id:pid,firstName:'Jane',lastName:'Doe',companyId:cid,jobTitle:'CEO',email:'jane@alpha.com',phone:'555-0001',mobile:'555-0002'});
+    state.tasks.push({id:uuid(),title:'Follow up Q4 Order',dueDate:'2025-11-20',status:'Open',priority:'High',relatedType:'Company',relatedId:cid,time:'10:00'});
+    state.cases.push({id:uuid(),subject:'Defective Product',contactId:pid,priority:'High',status:'Open',agentId:'JT101',timeOpened:new Date().toISOString(), type:'RMA'});
+  }
+  saveState();
+};
+const saveState = () => Object.keys(STORAGE_KEYS).forEach(k => localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(state[k])));
+const updateEntity = (ent,data) => {
+  const idx = state[ent].findIndex(i => i.id === data.id);
+  if (idx > -1) state[ent][idx] = {...state[ent][idx],...data};
+  else state[ent].push({id:uuid(),createdAt:new Date().toISOString(),...data});
+  saveState(); renderActiveTab();
+};
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+      l.classList.add('active');
+      renderActiveTab();
+    });
+  });
+  renderActiveTab();
+});
+window.exportData = () => {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='acoustiskin_crm.json'; a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* ==================== NAVIGATION & MODALS ==================== */
+const renderActiveTab = () => {
+  const activeLink = document.querySelector('.nav-link.active');
+  if (!activeLink) return;
+  const tab = activeLink.dataset.tab;
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  const el = document.getElementById(tab);
+  if (el) el.classList.add('active');
+
+  const fns = {
+    dashboard: renderDashboard,
+    companies: () => renderCompanies(false),
+    customers: () => renderCompanies(true),
+    contacts: renderContacts,
+    orders: renderOrderList,
+    tasks: renderTaskList,
+    cases: renderCaseList,
+    calendar: renderCalendar,
+    reports: renderReports
+  };
+  if (fns[tab]) fns[tab]();
+};
+const openUniversalModal = (title, html) => {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-form-area').innerHTML = html;
+  document.getElementById('universalModal').classList.add('active');
+};
+const closeUniversalModal = () => {
+  document.getElementById('universalModal').classList.remove('active');
+  renderActiveTab();
+};
+window.closeUniversalModal = closeUniversalModal;
+
+
+/* ==================== CALENDAR FUNCTIONS ==================== */
+window.changeCalendarDate = delta => {
+  if (calendarViewMode === 'daily') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
+  else if (calendarViewMode === 'weekly') currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
+  else if (calendarViewMode === 'monthly') currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
+};
+window.setCalendarViewMode = mode => { calendarViewMode = mode; renderCalendar(); };
+const renderCalendar = () => {
+  renderCalendarControls();
+  const c = document.getElementById('calendar-view-container');
+  calendarViewMode === 'daily' ? renderDaily(c) :
+  calendarViewMode === 'weekly' ? renderWeekly(c) :
+  renderMonthly(c);
+};
+const renderCalendarControls = () => {
+  const ctrl = document.getElementById('calendar-controls');
+  const label = calendarViewMode === 'daily' ? currentCalendarDate.toLocaleDateString() :
+                calendarViewMode === 'weekly' ? `Week of ${getWeekStart(new Date(currentCalendarDate)).toLocaleDateString()}` :
+                currentCalendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  ctrl.innerHTML = `
+    <div class="space-x-2">
+      <button onclick="setCalendarViewMode('daily')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode==='daily'?'bg-blue-600 text-white':'bg-gray-200 hover:bg-gray-300'}">Daily</button>
+      <button onclick="setCalendarViewMode('weekly')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode==='weekly'?'bg-blue-600 text-white':'bg-gray-200 hover:bg-gray-300'}">Weekly</button>
+      <button onclick="setCalendarViewMode('monthly')" class="px-4 py-2 text-sm rounded-lg ${calendarViewMode==='monthly'?'bg-blue-600 text-white':'bg-gray-200 hover:bg-gray-300'}">Monthly</button>
+    </div>
+    <div class="space-x-2">
+      <button onclick="changeCalendarDate(-1)" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Prev</button>
+      <span class="font-semibold text-gray-700">${label}</span>
+      <button onclick="changeCalendarDate(1)" class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Next</button>
+    </div>`;
+};
+const getWeekStart = d => {
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const start = new Date(d);
+  start.setDate(diff);
+  return start;
+};
+const getApptsForDay = (ds) => {
+    const appts = state.appointments.filter(a => a.date.startsWith(ds));
+    const tasks = state.tasks.filter(t => t.dueDate === ds);
+    return [...appts, ...tasks.map(t => ({
+        ...t,
+        isTask: true,
+        title: `Task: ${t.title} (${t.priority})`,
+        time: t.time || 'All Day'
+    }))];
+};
+
+// --- RENDER VIEWS ---
+const renderDaily = c => {
+  const ds = currentCalendarDate.toISOString().slice(0,10);
+  const events = getApptsForDay(ds);
+  let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Daily – ${currentCalendarDate.toLocaleDateString()}</h3>
+              <button onclick="openAppointmentModal('${ds}T09:00')" class="px-3 py-1 bg-green-600 text-white rounded-lg mb-4">+ Appointment</button>
+              <button onclick="openTaskModal(null,'${ds}')" class="px-3 py-1 bg-blue-600 text-white rounded-lg mb-4 ml-2">+ To-Do</button>
+              <table class="w-full text-left border-collapse">`;
+  
+  const eventMap = {};
+  events.forEach(e => {
+    const hour = e.isTask && e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).getHours();
+    if (!eventMap[hour]) eventMap[hour] = [];
+    eventMap[hour].push(e);
+  });
+  
+  const allDayEvents = eventMap['All Day'] || [];
+  if (allDayEvents.length > 0) {
+      html += `<tr class="border-b bg-gray-100">
+                <td class="w-24 font-bold p-2 text-red-600">All Day</td>
+                <td class="p-2">
+                    ${allDayEvents.map(e => `<p class="text-sm cursor-pointer" onclick="event.stopPropagation(); ${e.isTask ? `openTaskModal('${e.id}')` : `openAppointmentModal('${e.date}', '${e.id}')`}">${e.title}</p>`).join('')}
+                </td>
+              </tr>`;
+  }
+  
+  for(let h=6;h<=20;h++){
+    const slot = `${ds}T${String(h).padStart(2,'0')}:00`;
+    const eventsInHour = eventMap[h] || [];
+    const time = new Date(slot).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    
+    const clickAction = eventsInHour.length > 0 && !eventsInHour[0].isTask 
+        ? `openAppointmentModal('${eventsInHour[0].date}', '${eventsInHour[0].id}')` 
+        : `openAppointmentModal('${slot}')`;
+    
+    html += `<tr onclick="${clickAction}" class="cursor-pointer hover:bg-gray-100 border-b">
+                <td class="w-24 font-bold p-2">${time}</td>
+                <td class="p-2 ${eventsInHour.length > 0 ? 'bg-green-50 text-green-800' : 'text-gray-400'}">
+                  ${eventsInHour.length > 0 ? 
+                    eventsInHour.map(e => {
+                      const apptAction = e.isTask ? `openTaskModal('${e.id}')` : `openAppointmentModal('${e.date}', '${e.id}')`;
+                      return `<p class="text-sm cursor-pointer" onclick="event.stopPropagation(); ${apptAction}">${e.title.replace('Task: ','').split('(')[0]}</p>`;
+                    }).join('')
+                    : 'Click to schedule appointment'}
+                </td></tr>`;
+  }
+  html += `</table></div>`;
+  c.innerHTML = html;
+};
+const renderWeekly = c => {
+    const start = getWeekStart(new Date(currentCalendarDate));
+    let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">Weekly</h3>
+                <div class="grid grid-cols-7 gap-2 text-center font-semibold mb-2">`;
+    
+    const today = new Date().toDateString();
+
+    for(let i=0;i<7;i++){
+        const day = new Date(start); day.setDate(start.getDate()+i);
+        const ds = day.toISOString().slice(0,10);
+        const events = getApptsForDay(ds); 
+        const isToday = day.toDateString() === today;
         
-        <div class="p-6 pt-0 border-t border-indigo-600 mt-auto">
-             <button id="newCustomerButton" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md">
-                + New Customer
-            </button>
-        </div>
+        const sortedEvents = events.sort((a, b) => {
+            const timeA = a.time === 'All Day' ? -1 : parseInt((a.date || a.time).slice(0, 2));
+            const timeB = b.time === 'All Day' ? -1 : parseInt((b.date || b.time).slice(0, 2));
+            return timeA - timeB;
+        });
 
-        <div class="p-6 overflow-y-auto flex-grow">
-            <h3 class="text-sm font-semibold mb-2 text-indigo-300 uppercase tracking-wider">Customers</h3>
-            <ul id="customerList" class="space-y-1">
-                <!-- Customer list items loaded here by JavaScript -->
-                <li class="p-3 text-center text-gray-400">Loading customers...</li>
-            </ul>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="main-content flex flex-col ml-72 w-full">
-        <!-- Header -->
-        <header class="app-header bg-white p-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 class="text-xl font-bold text-gray-800">Customer: <span id="currentCustomerName" class="text-indigo-600">Select Customer</span></h1>
-            <div class="flex items-center space-x-4">
-                <button id="backToOrderButton" onclick="navigateTo('order-entry-view')" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
-                    Back to Order Entry
-                </button>
-                <button id="editCustomerButton" onclick="navigateTo('profile-editor-view')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
-                    Edit Customer Profile
-                </button>
-            </div>
-        </header>
-
-        <!-- --- Order Entry View (Defined in app.js for full implementation) --- -->
-        <div id="order-entry-view" class="app-view p-6">
-            <div class="max-w-7xl mx-auto">
-                <h2 class="text-2xl font-extrabold text-gray-900 mb-6 border-b pb-2">New Order Placement</h2>
-                <div id="customerStatusBar" class="p-2 font-semibold text-sm rounded-lg mb-4 bg-gray-200 text-gray-800">
-                    Status: N/A
+        html += `<div class="cal-day ${isToday?'today':''}" onclick="setCalendarViewMode('daily'); currentCalendarDate.setDate(${day.getDate()}); renderCalendar();">
+                    <strong>${day.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</strong>
+                    <button onclick="event.stopPropagation(); openAppointmentModal('${ds}T09:00')" class="text-xs text-green-600">+ Appt</button>
+                    <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 ml-1">+ To-Do</button>
+                    ${sortedEvents.map(e => {
+                        const timeDisplay = e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).toLocaleTimeString([],{hour:'numeric', minute:'2-digit'});
+                        const typeClass = e.isTask ? 'bg-blue-200 text-blue-800' : 'bg-green-200 text-green-800';
+                        const apptAction = e.isTask ? `openTaskModal('${e.id}')` : `openAppointmentModal('${e.date}', '${e.id}')`;
+                        return `<div class="cal-slot ${typeClass} cursor-pointer" onclick="event.stopPropagation(); ${apptAction}">${timeDisplay} ${e.title.replace('Task: ','').split('(')[0]}</div>`;
+                    }).join('')}
+                </div>`;
+    }
+    html += `</div></div>`;
+    c.innerHTML = html;
+};
+const renderMonthly = c => {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    const first = new Date(year, month, 1).getDay();
+    const days = new Date(year, month + 1, 0).getDate();
+    let html = `<div class="p-4"><h3 class="text-xl font-semibold mb-4">${currentCalendarDate.toLocaleString('default',{month:'long',year:'numeric'})}</h3>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-1">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
-                <!-- This section is dynamically generated or controlled by app.js -->
-                <p class="text-gray-600">Loading order form...</p>
+                <div class="grid grid-cols-7 gap-1">`;
+    for(let i=0;i<first;i++) html += '<div></div>';
+    for(let d=1;d<=days;d++){
+        const date = new Date(year, month, d);
+        const ds = date.toISOString().slice(0,10);
+        const events = getApptsForDay(ds);
+        const isToday = date.toDateString() === new Date().toDateString();
+        
+        const sortedEvents = events.sort((a, b) => {
+            const timeA = a.time === 'All Day' ? -1 : parseInt((a.date || a.time).slice(0, 2));
+            const timeB = b.time === 'All Day' ? -1 : parseInt((b.date || b.time).slice(0, 2));
+            return timeA - timeB;
+        });
+
+        html += `<div class="cal-day ${isToday?'today':''}" onclick="setCalendarViewMode('daily'); currentCalendarDate.setDate(${d}); renderCalendar();">
+                    <strong>${d}</strong>
+                    <button onclick="event.stopPropagation(); openAppointmentModal('${ds}T09:00')" class="text-xs text-green-600 block w-full">+ Appt</button>
+                    <button onclick="event.stopPropagation(); openTaskModal(null,'${ds}')" class="text-xs text-blue-600 block w-full">+ To-Do</button>
+                    ${sortedEvents.slice(0,2).map(e => {
+                        const timeDisplay = e.time === 'All Day' ? 'All Day' : new Date(e.date || `${ds}T${e.time}:00`).toLocaleTimeString([],{hour:'numeric'});
+                        const typeClass = e.isTask ? 'bg-blue-200 text-blue-800' : 'bg-green-200 text-green-800';
+                        const apptAction = e.isTask ? `openTaskModal('${e.id}')` : `openAppointmentModal('${e.date}', '${e.id}')`;
+                        return `<div class="cal-slot ${typeClass} overflow-hidden whitespace-nowrap text-ellipsis" title="${e.title}" onclick="event.stopPropagation(); ${apptAction}">${timeDisplay} ${e.title.replace('Task: ','').split('(')[0]}</div>`;
+                    }).join('')}
+                </div>`;
+    }
+    html += `</div></div>`;
+    c.innerHTML = html;
+};
+
+// --- MODAL FUNCTIONS ---
+window.openAppointmentModal = (d, id=null) => {
+    const [datePart, timePart] = d.split('T');
+    const ex = id ? state.appointments.find(a=>a.id===id) : state.appointments.find(a=>a.date===d) || {};
+    
+    const timeOptions = Array.from({length: 15}, (_, i) => i + 7).map(h => {
+        const time = `${String(h).padStart(2, '0')}:00`;
+        const selected = (ex.date ? ex.date.slice(11, 16) : timePart.slice(0, 5)) === time ? 'selected' : '';
+        const displayTime = new Date(`${datePart}T${time}`).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
+        return `<option value="${time}" ${selected}>${displayTime}</option>`;
+    }).join('');
+
+    const html = `
+        <form onsubmit="event.preventDefault(); saveAppointment(this, '${ex.id || ''}');" class="space-y-4">
+            <input type="hidden" name="datePart" value="${datePart}">
+            <input type="text" name="title" placeholder="Appointment Title (Required)" value="${ex.title || ''}" required class="w-full p-2 border rounded">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <input type="date" name="date" value="${datePart}" required class="w-full p-2 border rounded">
+                <select name="time" class="w-full p-2 border rounded">
+                    ${timeOptions}
+                </select>
             </div>
-        </div>
+            
+            <textarea name="note" placeholder="Notes/Description" class="w-full p-2 border rounded" rows="3">${ex.note || ''}</textarea>
 
-        <!-- --- Profile Editor View (Defined in app.js for full implementation) --- -->
-        <div id="profile-editor-view" class="app-view p-6 hidden">
-             <!-- This section is dynamically generated or controlled by app.js -->
-             <p class="text-gray-600">Loading profile editor...</p>
-        </div>
+            <div class="flex justify-end space-x-2">
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Save Appointment</button>
+                ${ex.id ? `<button type="button" onclick="if(confirm('Delete this appointment?')) deleteEntity('appointments','${ex.id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+                <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+            </div>
+        </form>`;
+    
+    openUniversalModal(ex.id ? 'Edit Appointment' : 'New Appointment', html);
+};
+window.openScheduleModal = window.openAppointmentModal; // Alias for calendar use
 
-    </main>
+window.saveAppointment = (f, id) => {
+    const newDate = `${f.date.value}T${f.time.value}`;
+    const data = {
+        title: f.title.value,
+        date: newDate,
+        note: f.note.value
+    };
+    updateEntity('appointments', id ? {id, ...data} : data);
+    closeUniversalModal();
+};
 
-    <!-- Load the JavaScript logic and Firebase connection -->
-    <script type="module" src="app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+/* ==================== TASK FUNCTIONS ==================== */
+window.openTaskModal = (id=null, date=null) => {
+  const t = id ? state.tasks.find(x=>x.id===id) : {};
+  const html = `
+    <form onsubmit="event.preventDefault(); saveTask(this, '${id||''}');">
+      <input type="text" name="title" placeholder="Task Title" value="${t.title||''}" required class="w-full p-2 border rounded mb-3">
+      <input type="date" name="dueDate" value="${date||t.dueDate||''}" required class="w-full p-2 border rounded mb-3">
+      <select name="time" class="w-full p-2 border rounded mb-3">
+        <option value="All Day" ${t.time==='All Day'?'selected':''}>All Day</option>
+        ${Array.from({length: 15}, (_, i) => i + 7).map(h => {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          const displayTime = new Date(`${date}T${time}`).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
+          return `<option value="${time}" ${t.time===time?'selected':''}>${displayTime}</option>`;
+        }).join('')}
+      </select>
+      <select name="priority" class="w-full p-2 border rounded mb-3">
+        <option value="High" ${t.priority==='High'?'selected':''}>High</option>
+        <option value="Medium" ${t.priority==='Medium'?'selected':''}>Medium</option>
+        <option value="Low" ${t.priority==='Low'?'selected':''}>Low</option>
+      </select>
+      <select name="status" class="w-full p-2 border rounded mb-3">
+        ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id?'Edit Task':'New Task',html);
+};
+window.saveTask = (f,id) => {
+  const data = {
+    title: f.title.value,
+    dueDate: f.dueDate.value,
+    time: f.time.value,
+    priority: f.priority.value,
+    status: f.status.value,
+  };
+  updateEntity('tasks', id?{id,...data}:{...data});
+  closeUniversalModal();
+};
+
+/* ==================== COMPANY & CONTACT FUNCTIONS ==================== */
+window.openCompanyModal = (id=null) => {
+  const c = id ? state.companies.find(x=>x.id===id) : {};
+  const html = `
+    <form onsubmit="event.preventDefault(); saveCompany(this, '${id||''}');" class="space-y-4">
+      <h3 class="font-bold text-lg border-b pb-2">Basic Details</h3>
+      <input type="text" name="name" placeholder="Company Name" value="${c.name||''}" required class="w-full p-2 border rounded">
+      <input type="text" name="industry" placeholder="Industry (e.g., Retail, Tech)" value="${c.industry||''}" class="w-full p-2 border rounded">
+      <div class="grid grid-cols-3 gap-4">
+        <select name="status" class="p-2 border rounded">
+          ${['Prospect','Lead','Customer','Partner'].map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <select name="customerTier" class="p-2 border rounded">
+          ${['None','Bronze','Silver','Gold'].map(t => `<option value="${t}" ${c.customerTier===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <input type="text" name="owner" placeholder="Account Owner" value="${c.owner||'Admin'}" required class="p-2 border rounded">
+      </div>
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Contact & Financials</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="tel" name="phone" placeholder="Main Phone" value="${c.phone||''}" class="p-2 border rounded">
+        <input type="email" name="email" placeholder="Billing Email" value="${c.email||''}" class="p-2 border rounded">
+      </div>
+      <input type="number" name="revenue" placeholder="Annual Revenue ($)" value="${c.revenue||''}" class="w-full p-2 border rounded">
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Address</h3>
+      <input type="text" name="address" placeholder="Street Address" value="${c.address||''}" class="w-full p-2 border rounded">
+      <div class="grid grid-cols-3 gap-4">
+        <input type="text" name="city" placeholder="City" value="${c.city||''}" class="p-2 border rounded">
+        <input type="text" name="state" placeholder="State/Province" value="${c.state||''}" class="p-2 border rounded">
+        <input type="text" name="zip" placeholder="Zip/Postal" value="${c.zip||''}" class="p-2 border rounded">
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save Company</button>
+        ${id ? `<button type="button" onclick="if(confirm('Delete ${c.name}?')) deleteEntity('companies','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id?'Edit Company: '+c.name:'Add New Company', html);
+};
+
+window.saveCompany = (f, id) => {
+  const data = {
+    name: f.name.value,
+    status: f.status.value,
+    customerTier: f.customerTier.value,
+    revenue: parseFloat(f.revenue.value || 0),
+    owner: f.owner.value,
+    industry: f.industry.value,
+    phone: f.phone.value,
+    email: f.email.value,
+    address: f.address.value,
+    city: f.city.value,
+    state: f.state.value,
+    zip: f.zip.value,
+  };
+  updateEntity('companies', id ? {id, ...data} : data);
+};
+
+window.openContactModal = (id=null) => {
+  const contact = id ? state.contacts.find(x=>x.id===id) : {};
+
+  const companyOptions = state.companies
+    .map(c => `<option value="${c.id}" ${c.id === contact.companyId ? 'selected' : ''}>${c.name} (${c.status})</option>`)
+    .join('');
+    
+  const html = `
+    <form onsubmit="event.preventDefault(); saveContact(this, '${id||''}');" class="space-y-4">
+      <h3 class="font-bold text-lg border-b pb-2">Personal Details</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="text" name="firstName" placeholder="First Name" value="${contact.firstName||''}" required class="p-2 border rounded">
+        <input type="text" name="lastName" placeholder="Last Name" value="${contact.lastName||''}" required class="p-2 border rounded">
+      </div>
+      <input type="text" name="jobTitle" placeholder="Job Title" value="${contact.jobTitle||''}" class="w-full p-2 border rounded">
+      
+      <h3 class="font-bold text-lg border-b pb-2 mt-4">Affiliation & Contact</h3>
+      <select name="companyId" class="w-full p-2 border rounded">
+        <option value="">-- Select Company (Required) --</option>
+        ${companyOptions}
+      </select>
+      <div class="grid grid-cols-2 gap-4">
+        <input type="email" name="email" placeholder="Email" value="${contact.email||''}" required class="p-2 border rounded">
+        <input type="tel" name="phone" placeholder="Phone (Work)" value="${contact.phone||''}" class="p-2 border rounded">
+        <input type="tel" name="mobile" placeholder="Phone (Mobile)" value="${contact.mobile||''}" class="p-2 border rounded">
+        <input type="text" name="pickleballClub" placeholder="Pickleball Club (Optional)" value="${contact.pickleballClub||''}" class="p-2 border rounded">
+      </div>
+
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save Contact</button>
+        ${id ? `<button type="button" onclick="if(confirm('Delete ${contact.firstName} ${contact.lastName}?')) deleteEntity('contacts','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+        <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      </div>
+    </form>`;
+  openUniversalModal(id ? 'Edit Contact' : 'Add New Contact/Customer', html);
+};
+
+window.saveContact = (f, id) => {
+  if (!f.companyId.value) return alert('A contact must be associated with a company.');
+  const data = {
+    firstName: f.firstName.value,
+    lastName: f.lastName.value,
+    companyId: f.companyId.value,
+    jobTitle: f.jobTitle.value,
+    email: f.email.value,
+    phone: f.phone.value,
+    mobile: f.mobile.value,
+    pickleballClub: f.pickleballClub.value
+  };
+  updateEntity('contacts', id ? {id, ...data} : data);
+};
+
+/* ==================== CASE MANAGEMENT FUNCTIONS ==================== */
+window.openCaseModal = (id=null, contactId=null) => {
+    const c = id ? state.cases.find(x=>x.id===id) : {};
+    
+    const contactOptions = state.contacts
+        .map(cont => `<option value="${cont.id}" ${cont.id === (c.contactId || contactId) ? 'selected' : ''}>${cont.firstName} ${cont.lastName} (${state.companies.find(comp=>comp.id===cont.companyId)?.name||'N/A'})</option>`)
+        .join('');
+
+    const html = `
+        <form onsubmit="event.preventDefault(); saveCase(this, '${id||''}');" class="space-y-4">
+            <h3 class="font-bold text-lg border-b pb-2">Case Details</h3>
+            <input type="text" name="subject" placeholder="Case Subject/Title (Required)" value="${c.subject||''}" required class="w-full p-2 border rounded">
+            <select name="contactId" class="w-full p-2 border rounded">
+                <option value="">-- Select Contact/Customer (Required) --</option>
+                ${contactOptions}
+            </select>
+            <div class="grid grid-cols-2 gap-4">
+                <select name="type" class="p-2 border rounded">
+                    ${['Question','Defect','RMA','Billing','Other'].map(t => `<option value="${t}" ${c.type===t?'selected':''}>${t}</option>`).join('')}
+                </select>
+                <select name="priority" class="p-2 border rounded">
+                    ${['Low','Medium','High','Critical'].map(p => `<option value="${p}" ${c.priority===p?'selected':''}>${p}</option>`).join('')}
+                </select>
+            </div>
+            
+            <h3 class="font-bold text-lg border-b pb-2 mt-4">Status & Agent</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <select name="status" class="p-2 border rounded">
+                    ${['Open','In Progress','Waiting on Customer','Resolved','Closed'].map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+                <input type="text" name="agentId" placeholder="Assigned Agent ID" value="${c.agentId||'JT101'}" required class="p-2 border rounded">
+            </div>
+            
+            <textarea name="description" placeholder="Detailed Description / Internal Notes" class="w-full p-2 border rounded" rows="4">${c.description||''}</textarea>
+            
+            <div class="p-3 bg-yellow-50 rounded">
+                <h4 class="font-semibold text-sm mb-1">Follow-up Scheduling</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" name="followUpDate" class="p-2 border rounded" value="${c.followUpDate||''}">
+                    <select name="followUpType" class="p-2 border rounded">
+                        <option value="">-- Follow Up Type --</option>
+                        <option value="Task" ${c.followUpType==='Task'?'selected':''}>To-Do/Task</option>
+                        <option value="Appointment" ${c.followUpType==='Appointment'?'selected':''}>Appointment</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded">Save Case</button>
+                ${id ? `<button type="button" onclick="if(confirm('Delete Case ${c.id.slice(0,4)}?')) deleteEntity('cases','${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>` : ''}
+                <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+            </div>
+        </form>`;
+    openUniversalModal(id ? 'Edit Case: ' + c.subject : 'New Case', html);
+};
+
+window.saveCase = (f, id) => {
+    if (!f.contactId.value || !f.subject.value) return alert('Subject and Contact are required.');
+
+    const data = {
+        id: id || uuid(),
+        subject: f.subject.value,
+        contactId: f.contactId.value,
+        type: f.type.value,
+        priority: f.priority.value,
+        status: f.status.value,
+        agentId: f.agentId.value,
+        description: f.description.value,
+        timeOpened: id ? state.cases.find(x=>x.id===id).timeOpened : new Date().toISOString(),
+        timeClosed: f.status.value === 'Resolved' || f.status.value === 'Closed' ? new Date().toISOString() : null,
+        followUpDate: f.followUpDate.value,
+        followUpType: f.followUpType.value,
+    };
+    
+    if (data.followUpDate && data.followUpType) {
+        const contact = state.contacts.find(c => c.id === data.contactId);
+        const contactName = contact ? `${contact.firstName} ${contact.lastName}` : 'Customer';
+        const fuTitle = `Follow-up Case ${data.id.slice(0, 4)}: ${data.subject} for ${contactName}`;
+
+        if (data.followUpType === 'Task') {
+            updateEntity('tasks', {
+                title: fuTitle,
+                dueDate: data.followUpDate,
+                time: 'All Day', 
+                priority: 'Medium',
+                status: 'Open',
+                relatedType: 'Case',
+                relatedId: data.id
+            });
+        } else if (data.followUpType === 'Appointment') {
+            window.openAppointmentModal(`${data.followUpDate}T09:00`); 
+        }
+    }
+
+    updateEntity('cases', data);
+    closeUniversalModal();
+};
+
+/* ==================== ORDER FUNCTIONS ==================== */
+const updateCustomerInfo = () => {
+    const info = document.getElementById('cust-info');
+    if (selectedCustomer) {
+        const co = state.companies.find(c=>c.id===selectedCustomer.companyId);
+        info.innerHTML = `<p><strong>${selectedCustomer.firstName} ${selectedCustomer.lastName}</strong> – ${selectedCustomer.email} (${selectedCustomer.phone})<br>${co?.name||'N/A'}</p>`;
+        if(document.getElementById('ship-name')) document.getElementById('ship-name').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+    } else info.innerHTML = '<p class="text-gray-500">Select a customer</p>';
+};
+const searchCust = q => {
+    const res = document.getElementById('cust-results');
+    if (!q.trim()) { res.innerHTML=''; return; }
+    const matches = state.contacts.filter(c=>
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q.toLowerCase()) ||
+        c.email.toLowerCase().includes(q.toLowerCase()) ||
+        c.phone.includes(q)
+    ).slice(0,5);
+    res.innerHTML = matches.map(c=>`<div class="p-2 search-result" onclick="selectCust('${c.id}')">${c.firstName} ${c.lastName} – ${c.email}</div>`).join('');
+};
+window.selectCust = id => {
+    selectedCustomer = state.contacts.find(c=>c.id===id);
+    document.getElementById('cust-search').value = `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+    document.getElementById('cust-results').innerHTML = '';
+    updateCustomerInfo();
+};
+const searchProd = q => {
+    const res = document.getElementById('prod-results');
+    if (!q.trim()) { res.classList.add('hidden'); return; }
+    const matches = state.inventory.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.id.includes(q));
+    res.innerHTML = matches.map(p=>`<div class="p-2 search-result" onclick="addToCart('${p.id}')">${p.name} – $${p.unitPrice}</div>`).join('');
+    res.classList.remove('hidden');
+};
+window.addToCart = id => {
+    const p = state.inventory.find(x=>x.id===id);
+    const variant = {};
+    if (p.variants.size && p.variants.size.length > 0) variant.size = p.variants.size[0];
+    if (p.variants.color && p.variants.color.length > 0) variant.color = p.variants.color[0];
+
+    currentCart.push({productId:id,qty:1,variant:variant,custom:'', unitPrice: p.unitPrice});
+    document.getElementById('prod-search').value='';
+    document.getElementById('prod-results').classList.add('hidden');
+    updateCartDisplay();
+    calcTotals();
+};
+const updateCartDisplay = () => {
+    const c = document.getElementById('cart-items');
+    c.innerHTML = currentCart.map((it,i)=>{
+        const p = state.inventory.find(x=>x.id===it.productId);
+        if (!p) return ''; 
+
+        const variantSelect = (key, currentVal, options) => {
+            if (!options || options.length === 0) return '';
+            return `<select onchange="updVariant(${i},'${key}',this.value); calcTotals();" class="text-xs p-1 border rounded">
+                ${options.map(s=>`<option value="${s}" ${currentVal===s?'selected':''}>${s}</option>`).join('')}
+            </select>`;
+        };
+        
+        const linePrice = it.unitPrice || p.unitPrice;
+        
+        if (!it.variant.size && p.variants.size && p.variants.size.length > 0) it.variant.size = p.variants.size[0];
+        if (!it.variant.color && p.variants.color && p.variants.color.length > 0) it.variant.color = p.variants.color[0];
+
+        return `<div class="p-3 bg-white border rounded flex items-center justify-between">
+            <div class="flex-1 space-y-1">
+                <p class="font-medium">${p.name}</p>
+                <div class="flex gap-2">
+                    <input type="text" value="${it.productId}" onchange="updSKU(${i},this.value)" placeholder="SKU/Part#" class="text-xs p-1 border rounded w-24">
+                    <input type="number" step="0.01" value="${linePrice}" onchange="updPrice(${i},this.value)" placeholder="Unit Price" class="text-xs p-1 border rounded w-20">
+                    <input type="text" placeholder="Custom Text (e.g. Name)" value="${it.custom||''}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
+                </div>
+                <div class="flex gap-2">
+                    ${variantSelect('size', it.variant.size, p.variants.size)}
+                    ${variantSelect('color', it.variant.color, p.variants.color)}
+                </div>
+            </div>
+            <input type="number" min="1" value="${it.qty}" onchange="updQty(${i},this.value)" class="w-16 p-1 border rounded mx-2">
+            <span class="font-semibold">${formatCurrency(linePrice*it.qty)}</span>
+            <button onclick="remItem(${i})" class="text-red-600 ml-2">×</button>
+        </div>`;
+    }).join('')||'<p class="text-gray-500">Cart empty</p>';
+};
+window.updPrice = (i, v) => { currentCart[i].unitPrice = parseFloat(v); updateCartDisplay(); calcTotals(); };
+window.updSKU = (i, v) => { currentCart[i].productId = v; updateCartDisplay(); };
+window.updVariant = (i,k,v) => { currentCart[i].variant[k]=v; };
+window.updCustom = (i,v) => { currentCart[i].custom=v; };
+window.updQty = (i,q) => { currentCart[i].qty=parseInt(q)||1; updateCartDisplay(); calcTotals(); };
+window.remItem = i => { currentCart.splice(i,1); updateCartDisplay(); calcTotals(); };
+
+const calcTotals = () => {
+    const sub = currentCart.reduce((s,it)=>s+(it.unitPrice||0)*it.qty,0); // Use line item price
+    const ship = parseFloat(document.getElementById('ship-method')?.value)||0;
+    const gift = document.getElementById('gift-wrap')?.checked?5:0;
+    const tax = sub*0.08;
+    const total = sub + ship + gift + tax;
+    
+    if (document.getElementById('subtotal')) document.getElementById('subtotal').textContent = formatCurrency(sub);
+    if (document.getElementById('shipping-cost')) document.getElementById('shipping-cost').textContent = formatCurrency(ship);
+    if (document.getElementById('tax-cost')) document.getElementById('tax-cost').textContent = formatCurrency(tax);
+    if (document.getElementById('grand-total')) document.getElementById('grand-total').textContent = formatCurrency(total);
+};
+window.calcTotals = calcTotals;
+window.applyDiscount = () => alert('Discount logic is not yet implemented!');
+
+
+window.openOrderEntryModal = (id=null) => {
+    const o = id ? state.orders.find(x=>x.id===id) : {};
+    currentCart = o.lines || [];
+    selectedCustomer = state.contacts.find(c=>c.id===o.contactId) || null;
+    
+    const shipAddr = o.shippingAddress || (selectedCustomer ? state.companies.find(c => c.id === selectedCustomer.companyId) : {});
+    
+    let html = `
+        <form onsubmit="event.preventDefault(); saveOrder(this, '${id||''}');" class="space-y-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">1. Customer, Roles & Procurement (PO required)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-sm font-medium">Search Contact (Sold To/Bill To)</label>
+                        <input type="text" id="cust-search" placeholder="Type name/email/phone…" class="w-full p-2 border rounded mt-1" oninput="searchCust(this.value)">
+                        <div id="cust-results" class="search-results mt-1"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Purchase Order (PO) Number</label>
+                        <input type="text" id="po-number" placeholder="PO Number" required class="w-full p-2 border rounded mt-1" value="${o.poNumber || ''}">
+                    </div>
+                </div>
+                <div id="cust-info" class="mt-3 p-3 bg-blue-50 rounded"></div>
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <label class="block text-sm font-medium">Order Date</label>
+                        <input type="date" id="order-date" value="${o.orderDate ? o.orderDate.slice(0,10) : new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded mt-1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Required By Date</label>
+                        <input type="date" id="required-by-date" value="${o.requiredByDate || ''}" class="w-full p-2 border rounded mt-1">
+                    </div>
+                </div>
+                <label class="block text-sm font-medium mt-3">Order Source</label>
+                <select id="order-source" class="w-full p-2 border rounded mt-1">
+                    <option value="Ecommerce" ${o.source==='Ecommerce'?'selected':''}>E-commerce Site</option>
+                    <option value="Phone" ${o.source==='Phone'?'selected':''}>Phone Order (MOTO)</option>
+                    <option value="Internal" ${o.source==='Internal'?'selected':''}>Internal Test</option>
+                </select>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">2. Product & Cart Details (Edit Line Items below)</h3>
+                <div class="relative mb-3">
+                    <input type="text" id="prod-search" placeholder="Search SKU/Name…" class="w-full p-2 border rounded" oninput="searchProd(this.value)">
+                    <div id="prod-results" class="absolute z-10 bg-white border w-full mt-1 max-h-48 overflow-y-auto hidden"></div>
+                </div>
+                <div id="cart-items" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
+                <div class="flex justify-between font-semibold"><span>Subtotal:</span><span id="subtotal">$0.00</span></div>
+                <div class="flex justify-between font-semibold"><span>Shipping:</span><span id="shipping-cost">$0.00</span></div>
+                <div class="flex justify-between font-semibold"><span>Tax (8%):</span><span id="tax-cost">$0.00</span></div>
+                
+                <div class="flex items-center gap-4 mt-2">
+                    <label><input type="checkbox" id="gift-wrap" onchange="calcTotals()" ${o.giftWrap>0?'checked':''}> Gift Wrap (+$5)</label>
+                    <input type="text" id="gift-msg" placeholder="Gift Message" value="${o.giftMessage||''}" class="flex-1 p-2 border rounded">
+                </div>
+                <textarea id="special-instructions" placeholder="Special Instructions / Packaging / Labeling…" class="w-full p-2 border rounded mt-3" rows="2">${o.specialInstructions || ''}</textarea>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">3. Shipping & Fulfillment</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <input type="text" id="ship-name" placeholder="Recipient Name (Delivery Contact)" required class="p-2 border rounded" value="${o.shippingAddress?.name || ''}">
+                    <input type="text" id="ship-line1" placeholder="Street Address (Ship To)" required class="p-2 border rounded" value="${o.shippingAddress?.line1 || shipAddr?.address || ''}">
+                    <input type="text" id="ship-city" placeholder="City" required class="p-2 border rounded" value="${o.shippingAddress?.city || shipAddr?.city || ''}">
+                    <input type="text" id="ship-state" placeholder="State" required class="p-2 border rounded" value="${o.shippingAddress?.state || shipAddr?.state || ''}">
+                    <input type="text" id="ship-zip" placeholder="Zip" required class="p-2 border rounded" value="${o.shippingAddress?.zip || shipAddr?.zip || ''}">
+                    <input type="text" id="ship-country" placeholder="Country" value="${o.shippingAddress?.country || 'USA'}" required class="p-2 border rounded">
+                </div>
+                <label class="block text-sm font-medium">Shipping Method</label>
+                <select id="ship-method" class="w-full p-2 border rounded" onchange="calcTotals()">
+                    <option value="5.99" ${o.shipping===5.99?'selected':''}>Standard – $5.99 (Editable)</option>
+                    <option value="12.99" ${o.shipping===12.99?'selected':''}>Expedited – $12.99 (Editable)</option>
+                    <option value="29.99" ${o.shipping===29.99?'selected':''}>Next Day – $29.99 (Editable)</option>
+                    <option value="0.00" ${o.shipping===0.00?'selected':''}>Customer Account / Free</option>
+                </select>
+                <input type="text" id="carrier-account" placeholder="Customer Carrier Account #" class="w-full p-2 border rounded mt-3" value="${o.carrierAccount || ''}">
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">4. Billing & Payment</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="payment-terms" class="p-2 border rounded">
+                        <option value="CC" ${o.paymentTerms==='CC'?'selected':''}>Credit Card / Immediate</option>
+                        <option value="Net30" ${o.paymentTerms==='Net30'?'selected':''}>Net 30 Days</option>
+                        <option value="Net60" ${o.paymentTerms==='Net60'?'selected':''}>Net 60 Days</option>
+                        <option value="Wire" ${o.paymentTerms==='Wire'?'selected':''}>Wire Transfer</option>
+                    </select>
+                    <select id="pay-method" class="p-2 border rounded">
+                        <option ${o.payment?.method==='Credit Card'?'selected':''}>Credit Card</option>
+                        <option ${o.payment?.method==='Debit Card'?'selected':''}>Debit Card</option>
+                        <option ${o.payment?.method==='Gift Card'?'selected':''}>Gift Card</option>
+                    </select>
+                </div>
+
+                <div class="mt-3">
+                    <input type="text" id="card-number" placeholder="Credit Card Number (Demo Only)" class="w-full p-2 border rounded mb-3" value="${o.payment?.cardNumber || ''}">
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <input type="text" id="card-expiry" placeholder="MM/YY" class="p-2 border rounded" value="${o.payment?.expiry || ''}">
+                        <input type="text" id="card-cvv" placeholder="CVV" class="p-2 border rounded" value="${o.payment?.cvv || ''}">
+                    </div>
+                </div>
+
+                <div class="mt-3 p-3 bg-red-100 border border-red-300 rounded">
+                    <p class="text-sm font-bold text-red-700">PCI Warning: Do NOT enter or save real card data in this demo application.</p>
+                </div>
+                
+                <div class="flex justify-between font-bold text-xl mt-3">
+                    <span>TOTAL CHARGED:</span><span id="grand-total">$0.00</span>
+                </div>
+                <label class="flex items-center mt-3">
+                    <input type="checkbox" id="terms" required class="mr-2" ${id?'checked':''}>
+                    I confirm PO, pricing, and binding Terms & Conditions
+                </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium">Place / Save Order</button>
+                <button type="button" onclick="closeUniversalModal()" class="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>
+            </div>
+        </form>`;
+    openUniversalModal(id?'Edit Order: #'+o.id.slice(0,6):'New Enterprise Order',html);
+    updateCustomerInfo();
+    updateCartDisplay();
+    calcTotals();
+};
+
+window.saveOrder = (f, id) => {
+    if (!document.getElementById('terms').checked) return alert('Accept T&Cs');
+    if (!selectedCustomer) return alert('Select a customer for this order.');
+    
+    calcTotals(); 
+
+    const o = {
+        id: id || uuid(),
+        customerId: selectedCustomer?.companyId,
+        contactId: selectedCustomer?.id,
+        source: f.querySelector('#order-source').value,
+        poNumber: f.querySelector('#po-number').value,
+        requiredByDate: f.querySelector('#required-by-date').value,
+        specialInstructions: f.querySelector('#special-instructions').value,
+        carrierAccount: f.querySelector('#carrier-account').value,
+        paymentTerms: f.querySelector('#payment-terms').value,
+        lines: currentCart,
+        
+        subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(/[$,]/g,'')),
+        shipping: parseFloat(document.getElementById('ship-method').value),
+        tax: parseFloat(document.getElementById('tax-cost').textContent.replace(/[$,]/g,'')),
+        giftWrap: document.getElementById('gift-wrap').checked?5:0,
+        giftMessage: f.querySelector('#gift-msg').value,
+        total: parseFloat(document.getElementById('grand-total').textContent.replace(/[$,]/g,'')),
+        
+        status: id ? state.orders.find(x=>x.id===id).status : 'Pending',
+        orderDate: f.querySelector('#order-date').value || new Date().toISOString(),
+
+        shippingAddress: {
+            name: f.querySelector('#ship-name').value,
+            line1: f.querySelector('#ship-line1').value,
+            city: f.querySelector('#ship-city').value,
+            state: f.querySelector('#ship-state').value,
+            zip: f.querySelector('#ship-zip').value,
+            country: f.querySelector('#ship-country').value
+        },
+        payment: {
+            method: f.querySelector('#pay-method').value,
+            cardNumber: f.querySelector('#card-number').value, 
+            expiry: f.querySelector('#card-expiry').value, 
+            cvv: f.querySelector('#card-cvv').value, 
+        },
+        notes: f.querySelector('#fulfill-notes').value
+    };
+    
+    if (!id) { 
+        o.lines.forEach(line => {
+            const item = state.inventory.find(inv => inv.id === line.productId);
+            if (item) {
+                item.availableQty -= line.qty;
+            }
+        });
+    }
+
+    updateEntity('orders', o);
+    closeUniversalModal();
+};
+
+/* ==================== RENDERING FUNCTIONS ==================== */
+const renderDashboard = () => {
+  const cust = state.companies.filter(c=>c.status==='Customer').length;
+  const openT = state.tasks.filter(t=>t.status!=='Complete').length;
+  const rev = state.orders.reduce((s,o)=>s+o.total,0);
+  const openC = state.cases.filter(c=>c.status!=='Closed'&&c.status!=='Resolved').length;
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600"><p class="text-sm text-gray-500">Customers</p><h3 class="text-3xl font-bold text-blue-600">${cust}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600"><p class="text-sm text-gray-500">Revenue</p><h3 class="text-3xl font-bold text-green-600">${formatCurrency(rev)}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500"><p class="text-sm text-gray-500">Open Tasks</p><h3 class="text-3xl font-bold text-yellow-500">${openT}</h3></div>
+    <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600"><p class="text-sm text-gray-500">Open Cases</p><h3 class="text-3xl font-bold text-red-600">${openC}</h3></div>`;
+  const ov = state.tasks.filter(t=>isOverdue(t.dueDate,t.status));
+  document.getElementById('overdue-tasks-list').innerHTML = ov.map(t=>`<li class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between">
+    <div><p class="font-medium text-red-700">${t.title}</p><p class="text-sm text-red-500">Due: ${formatDate(t.dueDate)}</p></div>
+    <button onclick="openTaskModal('${t.id}')" class="text-red-700 hover:text-red-900 text-sm font-medium">Edit</button></li>`).join('')||'<p class="text-gray-500">No overdue tasks.</p>';
+};
+
+const renderCompanies = (custOnly=false) => {
+  const cont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
+  if (!cont) return;
+  
+  if (custOnly) {
+      document.getElementById('customers').innerHTML = `
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Active Customers</h2>
+          <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add New Customer/Contact</button>
+          <div id="customer-list" class="space-y-3"></div>`;
+  }
+  
+  let list = state.companies;
+  if (custOnly) list = list.filter(c=>c.status==='Customer');
+  const sorted = [...list].sort((a,b)=>a.name.localeCompare(b.name));
+  
+  const actualCont = custOnly ? document.getElementById('customer-list') : document.getElementById('company-list');
+
+  actualCont.innerHTML = sorted.map(c=>`
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.name}
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${c.status==='Customer'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-700'}">${c.status}</span>
+          <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-yellow-100 text-yellow-700">${c.customerTier||'None'}</span></p>
+      <p class="text-sm text-gray-500">Owner: ${c.owner||'N/A'} | Revenue: ${formatCurrency(c.revenue)} | Industry: ${c.industry||'N/A'}</p></div>
+      <button onclick="openCompanyModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+    </div>`).join('')||'<p class="p-4 bg-white rounded-lg">No records.</p>';
+};
+
+const renderContacts = () => {
+  const cont = document.getElementById('contact-list');
+  if (!cont) return;
+  const sorted = [...state.contacts].sort((a,b)=>a.lastName.localeCompare(b.lastName));
+  
+  const contactsTab = document.getElementById('contacts');
+  if (!contactsTab.querySelector('button[onclick="openContactModal()"]')) {
+     contactsTab.innerHTML = `
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">All Contacts</h2>
+          <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 mb-4">Add Contact</button>
+          <div id="contact-list" class="space-y-3"></div>`;
+  }
+
+  cont.innerHTML = sorted.map(c=>{
+    const comp = state.companies.find(x=>x.id===c.companyId)?.name||'Unassigned';
+    return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+      <div><p class="text-lg font-semibold text-gray-800">${c.lastName}, ${c.firstName} <span class="text-sm text-gray-600">(${c.jobTitle||'N/A'})</span></p>
+           <p class="text-sm text-gray-500">Company: ${comp} | Mobile: ${c.mobile||'N/A'} | Email: ${c.email}</p>
+           ${c.pickleballClub?`<p class="text-xs font-medium text-purple-600 mt-1">Pickleball Club: ${c.pickleballClub}</p>`:''}</div>
+      <div class="flex space-x-2">
+        <button onclick="openCaseModal(null,'${c.id}')" class="px-3 py-1 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition">New Case</button>
+        <button onclick="openContactModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">Edit</button>
+      </div>
+    </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No contacts.</p>';
+};
+
+const renderOrderList = () => {
+    const cont = document.getElementById('order-list');
+    if (!cont) return;
+    if (state.orders.length === 0) {
+        cont.innerHTML = '<p class="p-4 bg-white rounded-lg">No orders yet.</p>'; return;
+    }
+    const sorted = [...state.orders].sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
+    cont.innerHTML = sorted.map(o=>{
+        const cust = state.companies.find(c=>c.id===o.customerId);
+        const statusCol = o.status==='Delivered'?'bg-green-100 text-green-700':o.status==='Shipped'?'bg-blue-100 text-blue-700':o.status==='Cancelled'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700';
+        
+        const shippingCityState = `${o.shippingAddress?.city || 'N/A'}, ${o.shippingAddress?.state || ''}`;
+        const itemCount = o.lines.length;
+        
+        return `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center list-item">
+            <div>
+                <p class="text-lg font-semibold text-gray-800">#${o.id.slice(0,6)} – ${cust?.name||'N/A'} 
+                    <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 bg-gray-100 text-gray-600">${o.source}</span>
+                </p>
+                <p class="text-sm text-gray-500">
+                    Date: ${formatDate(o.orderDate)} | Total: ${formatCurrency(o.total)} | Items: ${itemCount}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                    Ship To: ${shippingCityState} | Payment: ${o.payment?.method || 'N/A'}
+                </p>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="openOrderEntryModal('${o.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border border-blue-600 hover:border-blue-800 transition">View/Edit</button>
+                <span class="px-3 py-1 rounded-full text-xs font-medium ${statusCol}">${o.status}</span>
+            </div>
+        </div>`;
+    }).join('')||'<p class="p-4 bg-white rounded-lg">No orders.</p>';
+};
+
+const renderTaskList = () => {
+  const cont = document.getElementById('task-list-container');
+  if (!cont) return;
+  const sorted = [...state.tasks].sort((a,b)=>{
+    const p = {High:3,Medium:2,Low:1};
+    const oa = isOverdue(a.dueDate,a.status)?1:0, ob = isOverdue(b.dueDate,b.status)?1:0;
+    if(oa!==ob) return ob-oa;
+    if(p[b.priority]!==p[a.priority]) return p[b.priority]-p[a.priority];
+    return new Date(a.dueDate)-new Date(b.dueDate);
+  });
+  cont.innerHTML = sorted.map(t=>{
+    const ov = isOverdue(t.dueDate,t.status);
+    const col = t.status==='Complete'?'border-green-500':ov?'border-red-500':t.priority==='High'?'border-yellow-500':'border-blue-500';
+    const bg = t.status==='Complete'?'bg-green-50':ov?'bg-red-50':'bg-white';
+    return `<div class="${bg} p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+               <div><p class="text-lg font-semibold text-gray-800">${t.title} <span class="text-sm text-gray-600">(${t.status})</span></p>
+                    <p class="text-sm text-gray-500">Due: <strong>${formatDate(t.dueDate)}</strong> ${t.time && t.time !== 'All Day' ? `at ${t.time}` : '(All Day)'} | Priority: ${t.priority}</p></div>
+               <div class="flex space-x-3">
+                 <select onchange="updateTaskStatus('${t.id}',this.value)" class="p-2 border rounded-lg text-sm bg-white">
+                   ${['Open','In Progress','Complete'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+                 </select>
+                 <button onclick="openTaskModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+               </div>
+             </div>`;
+  }).join('')||'<p class="p-4 bg-white rounded-lg">No tasks.</p>';
+};
+window.updateTaskStatus = (id,s) => updateEntity('tasks',{id,status:s});
+
+const renderCaseList = () => {
+    const cont = document.getElementById('case-list-container');
+    if (!cont) return;
+    const sorted = [...state.cases].sort((a,b)=> ({Critical:4,High:3,Medium:2,Low:1}[b.priority] - {Critical:4,High:3,Medium:2,Low:1}[a.priority]) );
+    cont.innerHTML = sorted.map(c=>{
+        const con = state.contacts.find(x=>x.id===c.contactId);
+        const col = c.status==='Resolved'||c.status==='Closed'?'border-green-500':c.priority==='Critical'?'border-red-600':c.status==='Open'?'border-red-500':'border-yellow-500';
+        return `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${col} flex justify-between items-center list-item">
+                <div><p class="text-lg font-semibold text-gray-800">${c.subject} <span class="text-xs font-medium text-gray-500">(${c.type})</span></p>
+                        <p class="text-sm text-gray-500">Customer: ${con?con.firstName+' '+con.lastName:'N/A'} | Agent: ${c.agentId}</p>
+                        <p class="text-xs text-gray-500">Opened: ${formatDateTime(c.timeOpened)} | Priority: <strong>${c.priority}</strong></p></div>
+                <div class="flex space-x-3">
+                    <span class="text-sm font-medium px-3 py-1 rounded-full ${c.status==='Open'?'bg-red-500':'bg-blue-500'} text-white">${c.status}</span>
+                    <button onclick="openCaseModal('${c.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                </div>
+                </div>`;
+    }).join('')||'<p class="p-4 bg-white rounded-lg">No cases.</p>';
+};
+
+const renderReports = () => { 
+  const output = document.getElementById('report-output');
+  output.innerHTML = `<h3 class="text-xl font-semibold mb-4">${activeReportType.toUpperCase()} Report</h3><p>Report generation logic for ${activeReportType} is a placeholder.</p>`;
+};
+window.setReportType = (type) => {
+  activeReportType = type;
+  document.querySelectorAll('.report-btn').forEach(btn => {
+    if (btn.textContent.toLowerCase().includes(type)) {
+      btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+    } else {
+      btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+      btn.classList.remove('bg-blue-600', 'text-white');
+    }
+  });
+  renderReports();
+};
+</script>
 </body>
 </html>
+

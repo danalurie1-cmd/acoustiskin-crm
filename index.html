@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AcoustiSkin CRM – Enterprise V18 Final</title>
+  <title>AcoustiSkin CRM – Enterprise V19</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -31,7 +31,7 @@
 <body class="h-screen flex flex-col">
 
 <header class="bg-[#1a2a44] text-white p-3 flex justify-between items-center shadow-lg">
-  <h1 class="text-xl font-semibold">AcoustiSkin CRM V18 Final</h1>
+  <h1 class="text-xl font-semibold">AcoustiSkin CRM V19</h1>
   <button onclick="exportData()" class="px-3 py-1 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition text-sm font-medium">
     Export Data JSON
   </button>
@@ -39,7 +39,7 @@
 
 <div class="flex flex-1 overflow-hidden">
   <div class="w-60 bg-[#2c3e50] text-white p-4 flex flex-col space-y-6 sidebar">
-    <div class="text-xl font-bold text-white uppercase">AcoustiSkin V18</div>
+    <div class="text-xl font-bold text-white uppercase">AcoustiSkin V19</div>
     <nav class="space-y-1" id="sidebar-nav">
       <a href="#" class="nav-link active font-medium" data-tab="dashboard">Dashboard</a>
       <a href="#" class="nav-link font-medium" data-tab="companies">Companies</a>
@@ -754,7 +754,7 @@ window.addToCart = id => {
     if (p.variants.size && p.variants.size.length > 0) variant.size = p.variants.size[0];
     if (p.variants.color && p.variants.color.length > 0) variant.color = p.variants.color[0];
 
-    currentCart.push({productId:id,qty:1,variant:variant,custom:''});
+    currentCart.push({productId:id,qty:1,variant:variant,custom:'', unitPrice: p.unitPrice});
     document.getElementById('prod-search').value='';
     document.getElementById('prod-results').classList.add('hidden');
     updateCartDisplay();
@@ -773,31 +773,39 @@ const updateCartDisplay = () => {
             </select>`;
         };
         
+        const linePrice = it.unitPrice || p.unitPrice;
+        
         if (!it.variant.size && p.variants.size && p.variants.size.length > 0) it.variant.size = p.variants.size[0];
         if (!it.variant.color && p.variants.color && p.variants.color.length > 0) it.variant.color = p.variants.color[0];
 
         return `<div class="p-3 bg-white border rounded flex items-center justify-between">
-            <div class="flex-1">
-                <p class="font-medium">${p.name} (${p.id})</p>
-                <div class="flex gap-2 mt-1">
+            <div class="flex-1 space-y-1">
+                <p class="font-medium">${p.name}</p>
+                <div class="flex gap-2">
+                    <input type="text" value="${it.productId}" onchange="updSKU(${i},this.value)" placeholder="SKU/Part#" class="text-xs p-1 border rounded w-24">
+                    <input type="number" step="0.01" value="${linePrice}" onchange="updPrice(${i},this.value)" placeholder="Unit Price" class="text-xs p-1 border rounded w-20">
+                    <input type="text" placeholder="Custom Text (e.g. Name)" value="${it.custom||''}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
+                </div>
+                <div class="flex gap-2">
                     ${variantSelect('size', it.variant.size, p.variants.size)}
                     ${variantSelect('color', it.variant.color, p.variants.color)}
-                    <input type="text" placeholder="Custom Text (e.g. Name)" value="${it.custom||''}" onchange="updCustom(${i},this.value)" class="text-xs p-1 border rounded w-24">
                 </div>
             </div>
             <input type="number" min="1" value="${it.qty}" onchange="updQty(${i},this.value)" class="w-16 p-1 border rounded mx-2">
-            <span class="font-semibold">${formatCurrency(p.unitPrice*it.qty)}</span>
+            <span class="font-semibold">${formatCurrency(linePrice*it.qty)}</span>
             <button onclick="remItem(${i})" class="text-red-600 ml-2">×</button>
         </div>`;
     }).join('')||'<p class="text-gray-500">Cart empty</p>';
 };
+window.updPrice = (i, v) => { currentCart[i].unitPrice = parseFloat(v); updateCartDisplay(); calcTotals(); };
+window.updSKU = (i, v) => { currentCart[i].productId = v; updateCartDisplay(); };
 window.updVariant = (i,k,v) => { currentCart[i].variant[k]=v; };
 window.updCustom = (i,v) => { currentCart[i].custom=v; };
 window.updQty = (i,q) => { currentCart[i].qty=parseInt(q)||1; updateCartDisplay(); calcTotals(); };
 window.remItem = i => { currentCart.splice(i,1); updateCartDisplay(); calcTotals(); };
 
 const calcTotals = () => {
-    const sub = currentCart.reduce((s,it)=>s+(state.inventory.find(p=>p.id===it.productId)?.unitPrice||0)*it.qty,0);
+    const sub = currentCart.reduce((s,it)=>s+(it.unitPrice||0)*it.qty,0); // Use line item price
     const ship = parseFloat(document.getElementById('ship-method')?.value)||0;
     const gift = document.getElementById('gift-wrap')?.checked?5:0;
     const tax = sub*0.08;
@@ -822,27 +830,39 @@ window.openOrderEntryModal = (id=null) => {
     let html = `
         <form onsubmit="event.preventDefault(); saveOrder(this, '${id||''}');" class="space-y-6">
             <div class="bg-gray-50 p-4 rounded-lg">
-                <h3 class="font-bold text-lg mb-3">1. Customer & Account Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 class="font-bold text-lg mb-3">1. Customer, Roles & Procurement (PO required)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
-                        <label class="block text-sm font-medium">Search (Name/Email/Phone)</label>
-                        <input type="text" id="cust-search" placeholder="Type…" class="w-full p-2 border rounded mt-1" oninput="searchCust(this.value)">
+                        <label class="block text-sm font-medium">Search Contact (Sold To/Bill To)</label>
+                        <input type="text" id="cust-search" placeholder="Type name/email/phone…" class="w-full p-2 border rounded mt-1" oninput="searchCust(this.value)">
                         <div id="cust-results" class="search-results mt-1"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium">Order Source</label>
-                        <select id="order-source" class="w-full p-2 border rounded mt-1">
-                            <option value="Ecommerce" ${o.source==='Ecommerce'?'selected':''}>E-commerce Site</option>
-                            <option value="Phone" ${o.source==='Phone'?'selected':''}>Phone Order (MOTO)</option>
-                            <option value="Internal" ${o.source==='Internal'?'selected':''}>Internal Test</option>
-                        </select>
+                        <label class="block text-sm font-medium">Purchase Order (PO) Number</label>
+                        <input type="text" id="po-number" placeholder="PO Number" required class="w-full p-2 border rounded mt-1" value="${o.poNumber || ''}">
                     </div>
                 </div>
                 <div id="cust-info" class="mt-3 p-3 bg-blue-50 rounded"></div>
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <label class="block text-sm font-medium">Order Date</label>
+                        <input type="date" id="order-date" value="${o.orderDate ? o.orderDate.slice(0,10) : new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded mt-1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Required By Date</label>
+                        <input type="date" id="required-by-date" value="${o.requiredByDate || ''}" class="w-full p-2 border rounded mt-1">
+                    </div>
+                </div>
+                <label class="block text-sm font-medium mt-3">Order Source</label>
+                <select id="order-source" class="w-full p-2 border rounded mt-1">
+                    <option value="Ecommerce" ${o.source==='Ecommerce'?'selected':''}>E-commerce Site</option>
+                    <option value="Phone" ${o.source==='Phone'?'selected':''}>Phone Order (MOTO)</option>
+                    <option value="Internal" ${o.source==='Internal'?'selected':''}>Internal Test</option>
+                </select>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
-                <h3 class="font-bold text-lg mb-3">2. Product & Cart Details</h3>
+                <h3 class="font-bold text-lg mb-3">2. Product & Cart Details (Edit Line Items below)</h3>
                 <div class="relative mb-3">
                     <input type="text" id="prod-search" placeholder="Search SKU/Name…" class="w-full p-2 border rounded" oninput="searchProd(this.value)">
                     <div id="prod-results" class="absolute z-10 bg-white border w-full mt-1 max-h-48 overflow-y-auto hidden"></div>
@@ -852,46 +872,55 @@ window.openOrderEntryModal = (id=null) => {
                 <div class="flex justify-between font-semibold"><span>Shipping:</span><span id="shipping-cost">$0.00</span></div>
                 <div class="flex justify-between font-semibold"><span>Tax (8%):</span><span id="tax-cost">$0.00</span></div>
                 
-                <div class="flex gap-2 mt-2">
-                    <input type="text" id="discount" placeholder="Discount Code" class="flex-1 p-2 border rounded">
-                    <button type="button" onclick="applyDiscount()" class="px-3 py-1 bg-yellow-600 text-white rounded">Apply</button>
-                </div>
                 <div class="flex items-center gap-4 mt-2">
                     <label><input type="checkbox" id="gift-wrap" onchange="calcTotals()" ${o.giftWrap>0?'checked':''}> Gift Wrap (+$5)</label>
                     <input type="text" id="gift-msg" placeholder="Gift Message" value="${o.giftMessage||''}" class="flex-1 p-2 border rounded">
                 </div>
+                <textarea id="special-instructions" placeholder="Special Instructions / Packaging / Labeling…" class="w-full p-2 border rounded mt-3" rows="2">${o.specialInstructions || ''}</textarea>
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
                 <h3 class="font-bold text-lg mb-3">3. Shipping & Fulfillment</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                    <input type="text" id="ship-name" placeholder="Recipient Name" required class="p-2 border rounded" value="${o.shippingAddress?.name || ''}">
-                    <input type="text" id="ship-line1" placeholder="Street Address" required class="p-2 border rounded" value="${o.shippingAddress?.line1 || shipAddr?.address || ''}">
+                    <input type="text" id="ship-name" placeholder="Recipient Name (Delivery Contact)" required class="p-2 border rounded" value="${o.shippingAddress?.name || ''}">
+                    <input type="text" id="ship-line1" placeholder="Street Address (Ship To)" required class="p-2 border rounded" value="${o.shippingAddress?.line1 || shipAddr?.address || ''}">
                     <input type="text" id="ship-city" placeholder="City" required class="p-2 border rounded" value="${o.shippingAddress?.city || shipAddr?.city || ''}">
                     <input type="text" id="ship-state" placeholder="State" required class="p-2 border rounded" value="${o.shippingAddress?.state || shipAddr?.state || ''}">
                     <input type="text" id="ship-zip" placeholder="Zip" required class="p-2 border rounded" value="${o.shippingAddress?.zip || shipAddr?.zip || ''}">
                     <input type="text" id="ship-country" placeholder="Country" value="${o.shippingAddress?.country || 'USA'}" required class="p-2 border rounded">
                 </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Shipping Method</label>
-                    <select id="ship-method" class="w-full p-2 border rounded" onchange="calcTotals()">
-                        <option value="5.99" ${o.shipping===5.99?'selected':''}>Standard – $5.99</option>
-                        <option value="12.99" ${o.shipping===12.99?'selected':''}>Expedited – $12.99</option>
-                        <option value="29.99" ${o.shipping===29.99?'selected':''}>Next Day – $29.99</option>
-                    </select>
-                </div>
-                <textarea id="fulfill-notes" placeholder="Internal notes…" class="w-full p-2 border rounded" rows="2">${o.notes||''}</textarea>
+                <label class="block text-sm font-medium">Shipping Method</label>
+                <select id="ship-method" class="w-full p-2 border rounded" onchange="calcTotals()">
+                    <option value="5.99" ${o.shipping===5.99?'selected':''}>Standard – $5.99 (Editable)</option>
+                    <option value="12.99" ${o.shipping===12.99?'selected':''}>Expedited – $12.99 (Editable)</option>
+                    <option value="29.99" ${o.shipping===29.99?'selected':''}>Next Day – $29.99 (Editable)</option>
+                    <option value="0.00" ${o.shipping===0.00?'selected':''}>Customer Account / Free</option>
+                </select>
+                <input type="text" id="carrier-account" placeholder="Customer Carrier Account #" class="w-full p-2 border rounded mt-3" value="${o.carrierAccount || ''}">
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
-                <h3 class="font-bold text-lg mb-3">4. Payment & Finalization</h3>
-                <input type="text" id="card-number" placeholder="Credit Card Number (Demo Only)" class="w-full p-2 border rounded mb-3" value="${o.payment?.cardNumber || ''}">
-                <div class="grid grid-cols-3 gap-4 mb-3">
-                    <input type="text" id="card-expiry" placeholder="MM/YY" class="p-2 border rounded" value="${o.payment?.expiry || ''}">
-                    <input type="text" id="card-cvv" placeholder="CVV" class="p-2 border rounded" value="${o.payment?.cvv || ''}">
-                    <select id="pay-method" class="p-2 border rounded">
-                        <option ${o.payment?.method==='Credit Card'?'selected':''}>Credit Card</option><option ${o.payment?.method==='Debit Card'?'selected':''}>Debit Card</option><option ${o.payment?.method==='Gift Card'?'selected':''}>Gift Card</option>
+                <h3 class="font-bold text-lg mb-3">4. Billing & Payment</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="payment-terms" class="p-2 border rounded">
+                        <option value="CC" ${o.paymentTerms==='CC'?'selected':''}>Credit Card / Immediate</option>
+                        <option value="Net30" ${o.paymentTerms==='Net30'?'selected':''}>Net 30 Days</option>
+                        <option value="Net60" ${o.paymentTerms==='Net60'?'selected':''}>Net 60 Days</option>
+                        <option value="Wire" ${o.paymentTerms==='Wire'?'selected':''}>Wire Transfer</option>
                     </select>
+                    <select id="pay-method" class="p-2 border rounded">
+                        <option ${o.payment?.method==='Credit Card'?'selected':''}>Credit Card</option>
+                        <option ${o.payment?.method==='Debit Card'?'selected':''}>Debit Card</option>
+                        <option ${o.payment?.method==='Gift Card'?'selected':''}>Gift Card</option>
+                    </select>
+                </div>
+
+                <div class="mt-3">
+                    <input type="text" id="card-number" placeholder="Credit Card Number (Demo Only)" class="w-full p-2 border rounded mb-3" value="${o.payment?.cardNumber || ''}">
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <input type="text" id="card-expiry" placeholder="MM/YY" class="p-2 border rounded" value="${o.payment?.expiry || ''}">
+                        <input type="text" id="card-cvv" placeholder="CVV" class="p-2 border rounded" value="${o.payment?.cvv || ''}">
+                    </div>
                 </div>
 
                 <div class="mt-3 p-3 bg-red-100 border border-red-300 rounded">
@@ -899,11 +928,11 @@ window.openOrderEntryModal = (id=null) => {
                 </div>
                 
                 <div class="flex justify-between font-bold text-xl mt-3">
-                    <span>Total Charged:</span><span id="grand-total">$0.00</span>
+                    <span>TOTAL CHARGED:</span><span id="grand-total">$0.00</span>
                 </div>
                 <label class="flex items-center mt-3">
                     <input type="checkbox" id="terms" required class="mr-2" ${id?'checked':''}>
-                    I confirm terms and processed payment
+                    I confirm PO, pricing, and binding Terms & Conditions
                 </label>
             </div>
 
@@ -912,7 +941,7 @@ window.openOrderEntryModal = (id=null) => {
                 <button type="button" onclick="closeUniversalModal()" class="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>
             </div>
         </form>`;
-    openUniversalModal(id?'Edit Order: #'+o.id.slice(0,6):'New Order',html);
+    openUniversalModal(id?'Edit Order: #'+o.id.slice(0,6):'New Enterprise Order',html);
     updateCustomerInfo();
     updateCartDisplay();
     calcTotals();
@@ -929,15 +958,23 @@ window.saveOrder = (f, id) => {
         customerId: selectedCustomer?.companyId,
         contactId: selectedCustomer?.id,
         source: f.querySelector('#order-source').value,
+        poNumber: f.querySelector('#po-number').value,
+        requiredByDate: f.querySelector('#required-by-date').value,
+        specialInstructions: f.querySelector('#special-instructions').value,
+        carrierAccount: f.querySelector('#carrier-account').value,
+        paymentTerms: f.querySelector('#payment-terms').value,
         lines: currentCart,
+        
         subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(/[$,]/g,'')),
         shipping: parseFloat(document.getElementById('ship-method').value),
         tax: parseFloat(document.getElementById('tax-cost').textContent.replace(/[$,]/g,'')),
         giftWrap: document.getElementById('gift-wrap').checked?5:0,
         giftMessage: f.querySelector('#gift-msg').value,
         total: parseFloat(document.getElementById('grand-total').textContent.replace(/[$,]/g,'')),
+        
         status: id ? state.orders.find(x=>x.id===id).status : 'Pending',
-        orderDate: id ? state.orders.find(x=>x.id===id).orderDate : new Date().toISOString(),
+        orderDate: f.querySelector('#order-date').value || new Date().toISOString(),
+
         shippingAddress: {
             name: f.querySelector('#ship-name').value,
             line1: f.querySelector('#ship-line1').value,

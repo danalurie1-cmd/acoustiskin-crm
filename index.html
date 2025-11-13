@@ -3,402 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified Customer Profile CRM</title>
+    <title>Assisted Order Creation</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
-        .crm-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
-        .section-header { cursor: pointer; transition: background-color 0.2s; }
-        .section-header:hover { background-color: #f0f4f8; }
+        .crm-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba/0, 0, 0, 0.1), 0 2px 4px -2px rgba/0, 0, 0, 0.1); }
         .input-group label { font-size: 0.875rem; font-weight: 600; color: #4b5563; }
-        .field-system { background-color: #e5e7eb; cursor: not-allowed; }
+        .table-header { background-color: #f9fafb; }
     </style>
 </head>
 <body>
     <div class="min-h-screen p-4 md:p-8">
 
-        <!-- Header and Action Bar -->
-        <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-gray-800">Unified Customer Profile: Apex Solutions Corp</h1>
-            <div class="space-x-3">
-                <button id="archiveButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-150">
-                    Deactivate / Archive
-                </button>
-                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150">
-                    Save Profile
-                </button>
+        <!-- Header and Customer Context -->
+        <header class="mb-6 flex justify-between items-center border-b pb-4">
+            <h1 class="text-3xl font-bold text-gray-800">New Assisted Order</h1>
+            <div class="text-right">
+                <p class="text-lg font-semibold text-indigo-700">Customer: Apex Solutions Corp</p>
+                <p class="text-sm text-gray-500">Primary Contact: Jane Doe, jane.doe@apex.com</p>
             </div>
         </header>
         
-        <!-- Status Bar -->
-        <div id="status-bar" class="w-full bg-blue-100 border border-blue-300 text-blue-800 p-3 rounded-lg mb-6 flex justify-between items-center transition-all duration-300">
-             <p class="font-medium">Account Status: <span id="currentStatus" class="font-bold">Active Customer</span></p>
-             <p class="text-sm">Last Updated: <span id="lastUpdated">N/A</span></p>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <form id="customerForm" class="space-y-6">
+            <!-- COLUMN 1 & 2: Product Selection and Cart -->
+            <div class="lg:col-span-2 space-y-6">
 
-            <!-- Section X - Maintenance Features (Top-level actions) -->
-            <div class="crm-card p-6 bg-yellow-50 border border-yellow-200">
-                <h2 class="text-xl font-bold text-yellow-800 mb-4">Edit / Maintenance Features (System Control)</h2>
-                <div class="flex flex-wrap gap-4">
-                    <button type="button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg">
-                        Add Additional Contact
-                    </button>
-                    <button type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">
-                        View Audit Trail
-                    </button>
-                    <div class="text-sm text-gray-600 self-center">
-                        * Duplicate check runs on Save.
-                    </div>
-                </div>
-            </div>
-
-            <!-- CRM Profile Container - Two Columns on Desktop -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- COLUMN 1: Core Profile, Contacts, Attributes -->
-                <div class="lg:col-span-2 space-y-6">
+                <!-- 1. Product Search & Addition -->
+                <div class="crm-card p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">1. Add Products to Order</h2>
                     
-                    <!-- Section I: Basic Company & Account Info -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('basicInfo')">
-                            <h2 class="text-lg font-semibold text-gray-700">I. Basic Company & Account Info</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="basicInfo" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Customer Status -->
-                            <div class="input-group">
-                                <label for="customer_status">Customer Status</label>
-                                <select id="customer_status" name="customer_status" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="Active Customer" selected>Active Customer</option>
-                                    <option value="Prospect">Prospect</option>
-                                    <option value="Inactive">Inactive</option>
-                                    <option value="Archived">Archived</option>
-                                </select>
-                            </div>
-                            <!-- Account / Customer ID -->
-                            <div class="input-group">
-                                <label for="account_id">Account / Customer ID</label>
-                                <input type="text" id="account_id" value="CUST-900451" class="w-full mt-1 p-2 border field-system rounded-md" readonly>
-                            </div>
-                            <!-- Legal Company Name -->
-                            <div class="input-group">
-                                <label for="legal_name">Legal Company Name</label>
-                                <input type="text" id="legal_name" value="Apex Solutions Corp" class="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                            </div>
-                            <!-- DBA Name -->
-                            <div class="input-group">
-                                <label for="dba_name">Doing-Business-As (DBA) Name</label>
-                                <input type="text" id="dba_name" placeholder="Leave blank if same" class="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section III: Primary & Secondary Contacts -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('contacts')">
-                            <h2 class="text-lg font-semibold text-gray-700">III. Primary & Secondary Contacts</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="contacts" class="p-6 space-y-4">
-                            <h3 class="font-bold text-base text-indigo-600 border-b pb-2">Primary Contact Person (Mandatory)</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="input-group"><label>Name</label><input type="text" value="Jane Doe" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>Job Title / Role</label><input type="text" value="Head of Procurement" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>Phone number</label><input type="text" value="(555) 123-4567" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>Email address</label><input type="email" value="jane.doe@apex.com" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            </div>
-                            
-                            <h3 class="font-bold text-base text-gray-600 border-b pb-2 mt-6">Secondary / Alternate Contact (Optional)</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="input-group"><label>Name</label><input type="text" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>Email</label><input type="email" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section IV: Company / Account Attributes -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('attributes')">
-                            <h2 class="text-lg font-semibold text-gray-700">IV. Company / Account Attributes</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="attributes" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="input-group"><label>Industry / Business Type</label><select class="w-full mt-1 p-2 border border-gray-300 rounded-md"><option>Manufacturing</option></select></div>
-                            <div class="input-group"><label>Company Size</label><select class="w-full mt-1 p-2 border border-gray-300 rounded-md"><option>51-200 employees</option></select></div>
-                            <div class="input-group md:col-span-2"><label>Special handling instructions</label><textarea class="w-full mt-1 p-2 border border-gray-300 rounded-md">Requires Purchase Order (PO) for all purchases over $5,000.</textarea></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- COLUMN 2: Order Info, Shipping, Billing -->
-                <div class="lg:col-span-1 space-y-6">
-
-                    <!-- Section V: Order & Transaction Info (Metrics) -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('orders')">
-                            <h2 class="text-lg font-semibold text-gray-700">V. Order & Transaction Info</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="orders" class="p-6 space-y-3">
-                            <div class="input-group"><label>Total Lifetime Spend</label><input type="text" value="$2,450,000.00" class="w-full mt-1 p-2 border field-system rounded-md" readonly></div>
-                            <div class="input-group"><label>Number of Orders Placed</label><input type="text" value="348" class="w-full mt-1 p-2 border field-system rounded-md" readonly></div>
-                            <div class="input-group"><label>Last Order Date</label><input type="text" value="2025-10-20" class="w-full mt-1 p-2 border field-system rounded-md" readonly></div>
-                            <div class="input-group"><label>Return Rate / Issues History</label><input type="text" value="1.2%" class="w-full mt-1 p-2 border field-system rounded-md" readonly></div>
-                            <button type="button" class="w-full bg-indigo-100 text-indigo-700 font-medium py-2 rounded-md hover:bg-indigo-200 mt-2">
-                                Order History Link (View 348 Past Orders)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Section VI: Shipping / Delivery Specifics -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('shipping')">
-                            <h2 class="text-lg font-semibold text-gray-700">VI. Shipping / Delivery Specifics</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="shipping" class="p-6 space-y-3">
-                            <div class="input-group">
-                                <label for="delivery_contact">Delivery Contact Name & Phone</label>
-                                <input type="text" id="delivery_contact" value="Logistics Manager (ext 201)" class="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                            </div>
-                            <div class="input-group">
-                                <label for="delivery_instructions">Delivery Instructions / Access Notes</label>
-                                <textarea id="delivery_instructions" class="w-full mt-1 p-2 border border-gray-300 rounded-md">Use loading dock #3. Deliveries accepted Mon-Fri, 9am-4pm ONLY.</textarea>
-                            </div>
-                            <div class="flex items-center space-x-2 mt-4">
-                                <input type="checkbox" id="ship_account_provided" class="rounded text-indigo-600 focus:ring-indigo-500">
-                                <label for="ship_account_provided" class="font-medium text-gray-700">Shipping Account Provided by Customer</label>
-                            </div>
-                            <div id="account_number_field" class="input-group hidden">
-                                <label for="ship_account_num">Shipping Account Number</label>
-                                <input type="text" id="ship_account_num" class="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section VII: Billing & Payment Details -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('billing')">
-                            <h2 class="text-lg font-semibold text-gray-700">VII. Billing & Payment Details</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="billing" class="p-6 space-y-3">
-                            <div class="input-group"><label>Payment Terms</label><select class="w-full mt-1 p-2 border border-gray-300 rounded-md"><option>Net 30</option></select></div>
-                            <div class="input-group"><label>Credit Limit (If Applicable)</label><input type="text" value="$50,000.00" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            <div class="input-group"><label>Invoice Recipient Email</label><input type="email" value="invoices@apex.com" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                        </div>
-                    </div>
-
-                    <!-- Section VIII: Compliance, Legal & Account Management -->
-                    <div class="crm-card">
-                        <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('compliance')">
-                            <h2 class="text-lg font-semibold text-gray-700">VIII. Compliance, Legal & Account Management</h2>
-                            <span class="text-gray-500">&#9660;</span>
-                        </div>
-                        <div id="compliance" class="p-6 space-y-3">
-                            <div class="input-group"><label>Contract Start Date / End Date</label><input type="text" value="2024-01-01 / 2026-01-01" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            <div class="input-group"><label>Risk Rating</label><select class="w-full mt-1 p-2 border border-gray-300 rounded-md"><option>Low</option></select></div>
-                            <div class="flex items-center space-x-2 mt-4">
-                                <input type="checkbox" id="privacy_consent" checked class="rounded text-indigo-600 focus:ring-indigo-500">
-                                <label for="privacy_consent" class="font-medium text-gray-700">Data Protection / Privacy Consent Captured</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                </div>
-            </div>
-
-            <!-- Section II: Corporate Addresses (Full Width) -->
-            <div class="crm-card">
-                <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('addresses')">
-                    <h2 class="text-lg font-semibold text-gray-700">II. Corporate & Primary Addresses</h2>
-                    <span class="text-gray-500">&#9660;</span>
-                </div>
-                <div id="addresses" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Corporate / Billing Address -->
-                    <div>
-                        <h3 class="font-bold text-base text-gray-800 mb-2">Corporate / Billing Address</h3>
-                        <div class="input-group"><label>Street</label><input type="text" value="123 Main St" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                        <div class="grid grid-cols-2 gap-4 mt-2">
-                            <div class="input-group"><label>City</label><input type="text" value="Anytown" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            <div class="input-group"><label>State/Province</label><input type="text" value="CA" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 mt-2">
-                            <div class="input-group"><label>Postal/Zip Code</label><input type="text" value="90210" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            <div class="input-group"><label>Country</label><input type="text" value="United States" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Shipping Address -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-base text-gray-800">Shipping Address</h3>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="sameAsBilling" class="rounded text-indigo-600 focus:ring-indigo-500">
-                                <label for="sameAsBilling" class="ml-2 text-sm text-gray-600 font-medium">Same as billing</label>
-                            </div>
-                        </div>
-                        <div id="shippingAddressFields" class="space-y-2">
-                            <div class="input-group"><label>Street</label><input type="text" value="123 Main St" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="input-group"><label>City</label><input type="text" value="Anytown" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>State/Province</label><input type="text" value="CA" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="input-group"><label>Postal/Zip Code</label><input type="text" value="90210" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                                <div class="input-group"><label>Country</label><input type="text" value="United States" class="w-full mt-1 p-2 border border-gray-300 rounded-md"></div>
-                            </div>
-                        </div>
-                        <button type="button" class="mt-4 w-full bg-gray-100 text-gray-700 font-medium py-2 rounded-md hover:bg-gray-200">
-                            Add Additional Shipping Address
+                    <div class="flex space-x-3 mb-4">
+                        <input type="text" id="product_search" placeholder="Search by SKU or Product Name..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <button type="button" onclick="searchProducts()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-150">
+                            Search
                         </button>
                     </div>
-                </div>
-            </div>
 
-            <!-- Section IX: Interaction & Support History (Timeline/Notes) -->
-            <div class="crm-card">
-                <div class="section-header p-4 border-b border-gray-100 flex justify-between items-center" onclick="toggleSection('history')">
-                    <h2 class="text-lg font-semibold text-gray-700">IX. Interaction & Support History</h2>
-                    <span class="text-gray-500">&#9660;</span>
+                    <!-- Simulated Search Results (Hidden until search is clicked) -->
+                    <div id="search_results" class="hidden border border-gray-200 rounded-lg overflow-hidden mt-4">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                    <th class="px-6 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="results_body" class="bg-white divide-y divide-gray-200 text-sm">
+                                <!-- Dynamic results populate here -->
+                                <tr data-sku="A457" data-price="49.99">
+                                    <td class="px-6 py-4">High-Efficiency Filter</td>
+                                    <td class="px-6 py-4">A457</td>
+                                    <td class="px-6 py-4">$49.99</td>
+                                    <td class="px-6 py-4 text-green-600">In Stock</td>
+                                    <td class="px-6 py-4"><button type="button" onclick="addItemToCart('A457', 'High-Efficiency Filter', 49.99)" class="text-indigo-600 hover:text-indigo-900 font-semibold">Add</button></td>
+                                </tr>
+                                <tr data-sku="B892" data-price="129.50">
+                                    <td class="px-6 py-4">Industrial Grade Sensor</td>
+                                    <td class="px-6 py-4">B892</td>
+                                    <td class="px-6 py-4">$129.50</td>
+                                    <td class="px-6 py-4 text-yellow-600">Low Stock (2)</td>
+                                    <td class="px-6 py-4"><button type="button" onclick="addItemToCart('B892', 'Industrial Grade Sensor', 129.50)" class="text-indigo-600 hover:text-indigo-900 font-semibold">Add</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div id="history" class="p-6">
-                    <h3 class="font-bold text-base text-gray-800 mb-3">Latest Activity</h3>
-                    <ul class="space-y-4">
-                        <li class="p-3 bg-indigo-50 border-l-4 border-indigo-500 rounded-md">
-                            **Call Log:** Agent Alex updated Payment Terms to Net 30. (2025-11-01)
-                        </li>
-                        <li class="p-3 bg-red-50 border-l-4 border-red-500 rounded-md">
-                            **Support Ticket #1004:** Issue with missing item in Order 998. (2025-10-25)
-                        </li>
-                        <li class="p-3 bg-green-50 border-l-4 border-green-500 rounded-md">
-                            **Email:** Sent Order Confirmation for Order 1001. (2025-10-20)
-                        </li>
-                    </ul>
-                    <div class="mt-6 input-group">
-                        <label for="next_follow_up">Next Follow-Up Date</label>
-                        <input type="date" id="next_follow_up" value="2025-11-20" class="w-full mt-1 p-2 border border-gray-300 rounded-md">
+
+                <!-- 2. Order Cart / Line Items -->
+                <div class="crm-card p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">2. Order Cart</h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Line Total</th>
+                                    <th class="px-4 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="order_cart_body" class="bg-white divide-y divide-gray-200 text-sm">
+                                <!-- Cart items will appear here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex justify-between space-x-4">
+                        <div class="w-full">
+                            <label for="po_number" class="block text-sm font-medium text-gray-700">Purchase Order (PO) Number</label>
+                            <input type="text" id="po_number" placeholder="Required for Apex Solutions" class="w-full mt-1 p-2 border border-yellow-400 rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-yellow-50">
+                        </div>
+                        <div class="w-full">
+                             <label for="coupon_code" class="block text-sm font-medium text-gray-700">Discount/Coupon Code</label>
+                            <div class="flex mt-1">
+                                <input type="text" id="coupon_code" placeholder="Enter code" class="p-2 border border-gray-300 rounded-l-md w-full">
+                                <button type="button" onclick="applyDiscount()" class="bg-gray-200 text-gray-700 font-medium px-4 rounded-r-md hover:bg-gray-300">Apply</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </form>
+
+            <!-- COLUMN 3: Totals, Shipping, Payment -->
+            <div class="lg:col-span-1 space-y-6">
+
+                <!-- 3. Order Totals and Summary -->
+                <div class="crm-card p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">3. Order Summary</h2>
+
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <div class="flex justify-between"><span>Subtotal:</span><span id="subtotal_value">$0.00</span></div>
+                        <div class="flex justify-between"><span>Discount:</span><span id="discount_value" class="text-red-500">-$0.00</span></div>
+                        <div class="flex justify-between"><span>Shipping (<span id="shipping_method_summary">Standard</span>):</span><span id="shipping_value">$15.00</span></div>
+                        <div class="flex justify-between"><span>Tax (8.0%):</span><span id="tax_value">$0.00</span></div>
+                        <div class="border-t pt-2 mt-2 flex justify-between font-bold text-lg text-gray-900">
+                            <span>Order Total:</span><span id="total_value">$15.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Shipping & Payment Details -->
+                <div class="crm-card p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">4. Fulfillment & Payment</h2>
+
+                    <!-- Shipping Address Pre-fill -->
+                    <h3 class="font-bold text-sm text-gray-700 mb-2">Shipping To:</h3>
+                    <div id="shipping_preview" class="p-3 bg-gray-50 rounded-md text-sm mb-4">
+                        Jane Doe, Apex Solutions Corp<br>
+                        123 Main St, Anytown, CA 90210<br>
+                        *Instructions: Use loading dock #3 (Preferred Carrier: UPS)*
+                    </div>
+                    <button type="button" onclick="openAddressModal('shipping')" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 rounded-lg transition duration-150 mb-4">
+                        Change / Select Ship-To Location
+                    </button>
+
+                    <!-- Payment Method -->
+                    <h3 class="font-bold text-sm text-gray-700 mb-2">Payment Method:</h3>
+                    <select id="payment_method" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="cc">New Credit Card</option>
+                        <option value="net30" selected>Net 30 (On Account)</option>
+                        <option value="wire">Wire Transfer</option>
+                        <option value="cc_on_file">Corporate Card (on file: **** 4567)</option>
+                    </select>
+
+                    <!-- Secure CC Input (Simulated PCI Compliance) -->
+                    <div id="cc_input_block" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-sm text-red-700 font-semibold mb-2">Secure Input Required</p>
+                        <div class="input-group mb-2">
+                             <label class="block text-sm text-gray-700">Card Number</label>
+                             <input type="text" placeholder="**** **** **** ****" class="w-full mt-1 p-2 border border-gray-300 rounded-md" maxlength="19">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                             <div class="input-group"><label class="block text-sm text-gray-700">Expiry (MM/YY)</label><input type="text" placeholder="MM/YY" class="w-full mt-1 p-2 border border-gray-300 rounded-md" maxlength="5"></div>
+                             <div class="input-group"><label class="block text-sm text-gray-700">CVV</label><input type="text" placeholder="***" class="w-full mt-1 p-2 border border-gray-300 rounded-md" maxlength="4"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Final Submit -->
+                    <button type="button" onclick="placeOrder()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-3 rounded-lg transition duration-150 mt-6">
+                        Place Order & Charge Total
+                    </button>
+                    <p class="text-xs text-center text-gray-500 mt-2">By clicking, you confirm customer authorization for $15.00 charge (T&Cs apply).</p>
+                </div>
+
+            </div>
+
+        </div>
     </div>
 
     <script>
-        // --- Core Application Logic ---
+        // --- Core Order Logic ---
 
-        // 1. Toggle Section Functionality (Collapsible Accordions)
-        function toggleSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.classList.toggle('hidden');
-                // Optional: Update the arrow icon (if implemented)
-            }
+        let cart = [];
+        const TAX_RATE = 0.08;
+        const SHIPPING_COST = 15.00;
+        let discount = 0;
+
+        const cartBody = document.getElementById('order_cart_body');
+        const subtotalEl = document.getElementById('subtotal_value');
+        const discountEl = document.getElementById('discount_value');
+        const shippingEl = document.getElementById('shipping_value');
+        const taxEl = document.getElementById('tax_value');
+        const totalEl = document.getElementById('total_value');
+        const ccInputBlock = document.getElementById('cc_input_block');
+        const paymentMethod = document.getElementById('payment_method');
+        const resultsBody = document.getElementById('results_body');
+        const searchResults = document.getElementById('search_results');
+
+
+        // Function to simulate product search
+        function searchProducts() {
+            // In a real CRM, this would make an API call to the product catalog
+            searchResults.classList.remove('hidden');
         }
 
-        // 2. "Same as Billing" Checkbox Logic
-        const sameAsBilling = document.getElementById('sameAsBilling');
-        const shippingAddressFields = document.getElementById('shippingAddressFields');
-
-        function updateShippingFields() {
-            if (sameAsBilling.checked) {
-                // If checked, disable fields and copy billing data (simulated)
-                shippingAddressFields.querySelectorAll('input').forEach(input => {
-                    input.setAttribute('readonly', 'true');
-                    input.classList.add('field-system');
-                });
+        // Function to add item to cart (Simulated)
+        function addItemToCart(sku, name, price) {
+            let item = cart.find(i => i.sku === sku);
+            if (item) {
+                item.qty += 1;
             } else {
-                // If unchecked, enable fields for custom input
-                shippingAddressFields.querySelectorAll('input').forEach(input => {
-                    input.removeAttribute('readonly');
-                    input.classList.remove('field-system');
-                });
+                cart.push({ sku, name, price, qty: 1 });
             }
+            renderCart();
+            calculateTotals();
         }
-        sameAsBilling.addEventListener('change', updateShippingFields);
-        updateShippingFields(); // Run on load
 
-        // 3. Customer Status Update Logic
-        const customerStatus = document.getElementById('customer_status');
-        const currentStatus = document.getElementById('currentStatus');
-        const statusBar = document.getElementById('status-bar');
+        // Function to update item quantity (Simulated)
+        function updateQuantity(sku, change) {
+            let item = cart.find(i => i.sku === sku);
+            if (!item) return;
 
-        customerStatus.addEventListener('change', (event) => {
-            const status = event.target.value;
-            currentStatus.textContent = status;
+            item.qty += change;
 
-            // Update status bar color based on status (simulated onSnapshot feature)
-            statusBar.classList.remove('bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-red-100');
-            statusBar.classList.remove('border-blue-300', 'border-green-300', 'border-yellow-300', 'border-red-300');
-            statusBar.classList.remove('text-blue-800', 'text-green-800', 'text-yellow-800', 'text-red-800');
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.sku !== sku);
+            }
+            renderCart();
+            calculateTotals();
+        }
 
-            if (status === 'Active Customer') {
-                statusBar.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
-            } else if (status === 'Prospect') {
-                statusBar.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800');
-            } else if (status === 'Inactive') {
-                statusBar.classList.add('bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
-            } else if (status === 'Archived') {
-                statusBar.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
+        // Renders the cart table in the UI
+        function renderCart() {
+            cartBody.innerHTML = '';
+            if (cart.length === 0) {
+                 cartBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Use the search above to add items.</td></tr>';
+            }
+
+            cart.forEach(item => {
+                const lineTotal = item.price * item.qty;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-3">${item.name}</td>
+                    <td class="px-4 py-3">${item.sku}</td>
+                    <td class="px-4 py-3 text-right">$${item.price.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-center flex items-center justify-center space-x-2">
+                        <button type="button" onclick="updateQuantity('${item.sku}', -1)" class="text-red-500 hover:text-red-700 font-bold px-2 py-0.5 border rounded-md">-</button>
+                        <span>${item.qty}</span>
+                        <button type="button" onclick="updateQuantity('${item.sku}', 1)" class="text-green-500 hover:text-green-700 font-bold px-2 py-0.5 border rounded-md">+</button>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold">$${lineTotal.toFixed(2)}</td>
+                    <td class="px-4 py-3">
+                        <button type="button" onclick="updateQuantity('${item.sku}', -${item.qty})" class="text-red-500 hover:text-red-700">Remove</button>
+                    </td>
+                `;
+                cartBody.appendChild(row);
+            });
+        }
+
+        // Calculates and updates totals in the Summary Card
+        function calculateTotals() {
+            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let taxableSubtotal = subtotal - discount;
+            let tax = taxableSubtotal > 0 ? taxableSubtotal * TAX_RATE : 0;
+            let total = taxableSubtotal + SHIPPING_COST + tax;
+
+            // Update UI elements
+            subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+            discountEl.textContent = `-$${discount.toFixed(2)}`;
+            taxEl.textContent = `$${tax.toFixed(2)}`;
+            totalEl.textContent = `$${total.toFixed(2)}`;
+            document.querySelector('.text-xs.text-center.text-gray-500').textContent = `By clicking, you confirm customer authorization for $${total.toFixed(2)} charge (T&Cs apply).`;
+        }
+
+        // Simulates applying a discount
+        function applyDiscount() {
+            const code = document.getElementById('coupon_code').value.toUpperCase();
+            if (code === 'VIP10') {
+                discount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0) * 0.10; // 10% off
+                alert('Discount applied: 10% off subtotal.');
+            } else {
+                discount = 0;
+                alert('Invalid discount code.');
+            }
+            calculateTotals();
+        }
+
+        // Toggles CC input visibility based on payment selection
+        paymentMethod.addEventListener('change', (event) => {
+            const method = event.target.value;
+            // Only show the input block if a new credit card is selected
+            if (method === 'cc') {
+                ccInputBlock.classList.remove('hidden');
+            } else {
+                ccInputBlock.classList.add('hidden');
             }
         });
 
-        // 4. Shipping Account Toggling Logic
-        const shipAccountProvided = document.getElementById('ship_account_provided');
-        const accountNumberField = document.getElementById('account_number_field');
+        // Simulates placing the order
+        function placeOrder() {
+            if (cart.length === 0) {
+                 alert('Error: The order cart is empty. Please add items before placing the order.');
+                 return;
+            }
+            // In a real CRM, this would send all data (Customer ID, Cart, Addresses, Payment, PO) to the backend API.
+            alert(`Order placed successfully for Apex Solutions Corp!\n\nTotal Charged: ${totalEl.textContent}\nPayment Method: ${paymentMethod.options[paymentMethod.selectedIndex].text}\nPO: ${document.getElementById('po_number').value}`);
+            
+            // Reset form (simulated navigation to confirmation screen)
+            cart = [];
+            discount = 0;
+            renderCart();
+            calculateTotals();
+            document.getElementById('po_number').value = '';
+            document.getElementById('coupon_code').value = '';
+        }
 
-        shipAccountProvided.addEventListener('change', () => {
-            accountNumberField.classList.toggle('hidden', !shipAccountProvided.checked);
-        });
+        // Placeholder for modal logic (not fully implemented in this single file)
+        function openAddressModal(type) {
+             alert(`Simulating opening modal to select saved ${type} addresses from the Customer Profile.`);
+        }
 
-        // 5. Deactivate/Archive Button Logic (Simulated)
-        document.getElementById('archiveButton').addEventListener('click', () => {
-            const archiveConfirmation = document.createElement('div');
-            archiveConfirmation.innerHTML = `
-                <div class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
-                    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm">
-                        <h3 class="text-xl font-bold text-red-700 mb-4">Confirm Archive</h3>
-                        <p class="text-gray-700 mb-6">Are you sure you want to deactivate Apex Solutions Corp? This will set the Customer Status to 'Archived'.</p>
-                        <div class="flex justify-end space-x-3">
-                            <button id="cancelArchive" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
-                            <button id="confirmArchive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm Deactivation</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(archiveConfirmation);
-
-            document.getElementById('cancelArchive').addEventListener('click', () => {
-                archiveConfirmation.remove();
-            });
-
-            document.getElementById('confirmArchive').addEventListener('click', () => {
-                customerStatus.value = 'Archived';
-                customerStatus.dispatchEvent(new Event('change')); // Trigger status update
-                archiveConfirmation.remove();
-            });
-        });
-
-        // 6. Set initial state (all sections collapsed by default except I, II, III)
+        // Initial setup
         window.onload = () => {
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
-            
-            // Hide all sections initially
-            const allSections = ['basicInfo', 'contacts', 'attributes', 'orders', 'shipping', 'billing', 'compliance', 'history', 'addresses'];
-            allSections.forEach(id => {
-                 const section = document.getElementById(id);
-                 if (section) section.classList.add('hidden');
-            });
-            
-            // Explicitly show the most critical sections on load for UX
-            document.getElementById('basicInfo').classList.remove('hidden');
-            document.getElementById('contacts').classList.remove('hidden');
-            document.getElementById('addresses').classList.remove('hidden');
-        };
+             renderCart();
+             calculateTotals();
+        }
     </script>
 </body>
 </html>

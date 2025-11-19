@@ -5,549 +5,658 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AcoustiSkin CRM Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>AS</text></svg>">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
-    .sidebar { width: 280px; }
-    .main-content { flex-grow: 1; }
-    .app-header { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .sidebar { width: 280px; transition: all 0.3s; }
+    .main-content { flex-grow: 1; margin-left: 280px; }
     .input-group label { font-weight: 500; font-size: 0.875rem; color: #4b5563; margin-bottom: 0.25rem; display: block; }
     .input-group input, .input-group select, .input-group textarea {
-      width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;
+      width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; outline: none;
     }
-    .section { margin-bottom: 2rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; }
-    .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-    .search-bar { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; margin-bottom: 1rem; }
-    .line-item { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-    .line-total { font-weight: bold; }
-    .kanban-column { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; min-height: 200px; }
-    .deal-card { background: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: move; }
-    .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .calendar-grid { display: grid; gap: 0.5rem; }
-    .calendar-day { min-height: 80px; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; background: white; cursor: pointer; }
-    .calendar-day.today { background: #eef2ff; border-color: #6366f1; }
-    .event { padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin: 0.25rem 0; font-size: 0.75rem; color: white; cursor: pointer; }
-    .appointment { background: #3b82f6; }
-    .task { background: #f59e0b; }
-    .team-card { background: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%; }
-    .line-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-    .line-total { font-weight: bold; }
-    .kanban-column { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; }
-    .deal-card { background: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: move; }
+    .input-group input:focus { border-color: #4f46e5; ring: 2px solid #e0e7ff; }
+    .section { margin-bottom: 2rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; background: white; }
+    .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .search-bar { width: 100%; padding: 0.5rem; border: 1px solid #4f46e5; background: #4338ca; color: white; border-radius: 0.375rem; margin-bottom: 1rem; }
+    .search-bar::placeholder { color: #a5b4fc; }
+    
+    /* Calendar Specifics */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e5e7eb; border: 1px solid #e5e7eb; }
+    .calendar-day { min-height: 100px; background: white; padding: 0.5rem; font-size: 0.875rem; }
+    .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; padding: 0.5rem 0; background: #f3f4f6; }
+    
+    /* Kanban Specifics */
+    .kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; }
+    .kanban-column { background: #f3f4f6; min-width: 280px; width: 280px; padding: 1rem; border-radius: 0.5rem; height: fit-content; }
+    .kanban-card { background: white; padding: 1rem; border-radius: 0.375rem; margin-bottom: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: grab; border-left: 4px solid #4f46e5; }
+    .kanban-card:active { cursor: grabbing; }
+    
+    /* Animations */
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen antialiased flex">
-  <div id="notification" class="fixed top-4 right-4 z-50 p-3 hidden rounded-lg shadow-xl text-sm font-medium transition-all duration-300" role="alert"></div>
-  <!-- Sidebar -->
-  <aside class="sidebar bg-indigo-700 text-white flex flex-col h-screen fixed">
-    <div class="p-6 text-2xl font-bold border-b border-indigo-600">AcoustiSkin CRM</div>
-    <div class="p-6 flex-grow overflow-y-auto">
-      <h3 class="text-sm font-semibold mb-2 text-indigo-300 uppercase tracking-wider">Navigation</h3>
+<body class="bg-gray-50 min-h-screen flex text-slate-800">
+
+  <div id="notification" class="fixed top-4 right-4 z-50 px-4 py-3 hidden rounded-lg shadow-xl text-sm font-medium transition-all duration-300 transform translate-y-0" role="alert"></div>
+
+  <aside class="sidebar bg-indigo-700 text-white flex flex-col h-screen fixed z-20 shadow-xl">
+    <div class="p-6 text-2xl font-bold border-b border-indigo-600 flex items-center gap-2">
+      <span>AcoustiSkin CRM</span>
+    </div>
+    
+    <div class="p-4 flex-grow overflow-y-auto">
+      <h3 class="text-xs font-bold mb-3 text-indigo-300 uppercase tracking-wider">Main Menu</h3>
       <nav class="space-y-1">
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="dashboard-view">
-          Dashboard
+        <a href="#" onclick="navigateTo('dashboard-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           Dashboard
         </a>
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="customers-view">
-          Customers
+        <a href="#" onclick="navigateTo('customers-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           Customers
         </a>
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="orders-view">
-          Orders
+        <a href="#" onclick="navigateTo('orders-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           Orders
         </a>
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="calendar-view">
-          Calendar
+        <a href="#" onclick="navigateTo('calendar-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           Calendar
         </a>
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="pipeline-view">
-          Pipeline
+        <a href="#" onclick="navigateTo('pipeline-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           Pipeline
         </a>
-        <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors" data-view="crmteam-view">
-          CRM Team
+        <a href="#" onclick="navigateTo('crmteam-view')" class="nav-link flex items-center p-3 rounded-lg hover:bg-indigo-600 transition-colors">
+           CRM Team
         </a>
       </nav>
-      <button id="newCustomerButton" class="w-full mt-6 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md">
+
+      <button id="newCustomerButton" class="w-full mt-6 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md border border-indigo-400">
         + New Customer
       </button>
     </div>
-    <div class="p-6 border-t border-indigo-600">
-      <h3 class="text-sm font-semibold mb-2 text-indigo-300 uppercase tracking-wider">Address Book</h3>
+
+    <div class="p-4 border-t border-indigo-600 bg-indigo-800">
+      <h3 class="text-xs font-bold mb-2 text-indigo-300 uppercase tracking-wider">Quick Search</h3>
       <input type="text" id="customerSearch" class="search-bar" placeholder="Search customers...">
-      <ul id="customerList" class="space-y-1 max-h-64 overflow-y-auto">
-        <li class="p-3 text-center text-gray-400">Loading...</li>
+      <ul id="customerList" class="space-y-1 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-500">
+        <li class="p-2 text-center text-indigo-300 text-sm">Loading...</li>
       </ul>
     </div>
   </aside>
-  <!-- Main Content -->
-  <main class="main-content flex flex-col ml-72 w-full">
-    <header class="app-header bg-white p-4 flex justify-between items-center sticky top-0 z-10">
-      <h1 class="text-xl font-bold text-gray-800">Customer: <span id="currentCustomerName" class="text-indigo-600">Select Customer</span></h1>
-      <div class="flex items-center space-x-4">
-        <button id="backToDashboard" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
-          Back to Dashboard
-        </button>
-        <button id="editCustomerButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+
+  <main class="main-content flex flex-col w-full">
+    <header class="app-header bg-white p-4 border-b flex justify-between items-center sticky top-0 z-10 shadow-sm">
+      <div>
+        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <span class="text-gray-400 font-normal">Active Context:</span>
+          <span id="currentCustomerName" class="text-indigo-600">No Customer Selected</span>
+        </h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="editCustomerButton" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
           Edit Profile
         </button>
+        <div class="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">DL</div>
       </div>
     </header>
-    <div id="customerStatusBar" class="mx-6 mt-4 p-2 font-semibold text-sm rounded-lg bg-gray-200 text-gray-800">
+
+    <div id="customerStatusBar" class="hidden mx-6 mt-4 p-3 font-semibold text-sm rounded-lg border">
       Status: N/A
     </div>
-    <div id="dashboard-view" class="app-view p-6"></div>
-    <div id="customers-view" class="app-view p-6 hidden"></div>
-    <div id="orders-view" class="app-view p-6 hidden"></div>
-    <div id="calendar-view" class="app-view p-6 hidden"></div>
-    <div id="pipeline-view" class="app-view p-6 hidden"></div>
-    <div id="crmteam-view" class="app-view p-6 hidden"></div>
+
+    <div id="app-container" class="p-6 relative">
+      
+      <div id="dashboard-view" class="app-view fade-in">
+        </div>
+
+      <div id="customers-view" class="app-view hidden fade-in">
+        </div>
+
+      <div id="orders-view" class="app-view hidden fade-in">
+        <div class="max-w-7xl mx-auto">
+          <div class="flex justify-between items-center mb-6">
+             <h2 class="text-2xl font-extrabold text-gray-900">Order Management</h2>
+             <button onclick="toggleOrderMode('create')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm">Create New Order</button>
+          </div>
+          
+          <div id="order-list-container" class="bg-white rounded-xl shadow overflow-hidden">
+             <table class="min-w-full divide-y divide-gray-200">
+               <thead class="bg-gray-50">
+                 <tr>
+                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                 </tr>
+               </thead>
+               <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
+                 </tbody>
+             </table>
+          </div>
+
+          <div id="new-order-container" class="hidden">
+             <div class="flex items-center mb-4">
+                <button onclick="toggleOrderMode('list')" class="text-sm text-gray-500 hover:text-indigo-600 mr-2">← Back to List</button>
+                <h3 class="text-lg font-bold">New Order Draft</h3>
+             </div>
+             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow border border-gray-200">
+                  <h3 class="text-sm font-bold mb-4 uppercase text-gray-400">Line Items</h3>
+                  <div id="orderItemsList"></div>
+                  <button id="addLineBtn" class="mt-4 text-indigo-600 font-medium text-sm hover:underline">+ Add Item</button>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-200 h-fit">
+                  <h3 class="text-sm font-bold mb-4 uppercase text-gray-400">Summary</h3>
+                  <div id="orderSummary" class="space-y-2 text-sm"></div>
+                  <div class="mt-4 pt-4 border-t">
+                    <label class="block text-xs font-medium text-gray-500">Shipping ($)</label>
+                    <input type="number" id="shippingCost" value="5.99" class="w-full border rounded p-2 mt-1">
+                  </div>
+                  <button id="processOrderBtn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition-transform active:scale-95">
+                    CONFIRM ORDER
+                  </button>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="calendar-view" class="app-view hidden fade-in">
+        <div class="max-w-7xl mx-auto">
+           <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Calendar</h2>
+           <div class="bg-white p-4 rounded-xl shadow">
+             <div class="calendar-header mb-2 rounded-t-lg">
+               <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+             </div>
+             <div id="calendarGrid" class="calendar-grid">
+               </div>
+           </div>
+        </div>
+      </div>
+
+      <div id="pipeline-view" class="app-view hidden fade-in">
+        <div class="h-full flex flex-col">
+          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Sales Pipeline</h2>
+          <div class="kanban-board flex-grow" id="kanbanBoard">
+             </div>
+        </div>
+      </div>
+
+      <div id="crmteam-view" class="app-view hidden fade-in">
+        <div class="max-w-7xl mx-auto">
+           <div class="flex justify-between items-center mb-6">
+             <h2 class="text-2xl font-extrabold text-gray-900">Team Management</h2>
+             <button onclick="addTeamMember()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-700">+ Add Member</button>
+           </div>
+           <div id="teamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              </div>
+        </div>
+      </div>
+
+    </div>
   </main>
+
   <script>
-    let activeCustomer = null;
-    let customers = [];
-    let appointments = [];
-    let tasks = [];
-    let orderItems = [];
-    let pipelineDeals = [];
-    const affiliates = ['Allyson', 'Sindi', 'Lori', 'Wen', 'Janine', 'Winnie'];
+    // --- STATE MANAGEMENT ---
+    let state = {
+      activeCustomer: null,
+      customers: [],
+      orders: [],
+      pipeline: [],
+      team: [],
+      events: []
+    };
+
     const paddleBrands = ['Selkirk', 'Joola', 'Paddletek', 'Onix', 'Gamma', 'Engage', 'ProKennex', 'Diadem', 'CRBN', 'Vatic Pro'];
-    const stateTax = { 'AL': 0.04, 'AK': 0.00, 'AZ': 0.056, 'AR': 0.065, 'CA': 0.0725, 'CO': 0.029, 'CT': 0.0635, 'DE': 0.00, 'FL': 0.06, 'GA': 0.04, 'HI': 0.04, 'ID': 0.06, 'IL': 0.0625, 'IN': 0.07, 'IA': 0.06, 'KS': 0.065, 'KY': 0.06, 'LA': 0.045, 'ME': 0.055, 'MD': 0.06, 'MA': 0.0625, 'MI': 0.06, 'MN': 0.06875, 'MS': 0.07, 'MO': 0.04225, 'MT': 0.00, 'NE': 0.055, 'NV': 0.0685, 'NH': 0.00, 'NJ': 0.06625, 'NM': 0.05125, 'NY': 0.04, 'NC': 0.0475, 'ND': 0.05, 'OH': 0.0575, 'OK': 0.045, 'OR': 0.00, 'PA': 0.06, 'RI': 0.07, 'SC': 0.06, 'SD': 0.042, 'TN': 0.07, 'TX': 0.0625, 'UT': 0.0485, 'VT': 0.06, 'VA': 0.043, 'WA': 0.065, 'WV': 0.06, 'WI': 0.05, 'WY': 0.04 };
-    let calendarView = 'month';
-    let currentDate = new Date();
-    function showNotification(msg, type = 'bg-blue-100 text-blue-700') {
-      const n = document.getElementById('notification');
-      n.textContent = msg;
-      n.className = `fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-sm font-medium ${type} transition-all duration-300`;
-      n.classList.remove('hidden');
-      setTimeout(() => n.classList.add('hidden'), 4000);
-    }
-    function navigateTo(view) {
-      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
-      document.getElementById(view)?.classList.remove('hidden');
-      document.getElementById('editCustomerButton')?.classList[view === 'customers-view' ? 'remove' : 'add']('hidden');
-      document.getElementById('backToDashboard')?.classList[view === 'dashboard-view' ? 'add' : 'remove']('hidden');
-      if (view === 'dashboard-view') renderDashboard();
-      if (view === 'customers-view') renderCustomers();
-      if (view === 'orders-view' && activeCustomer) renderOrderForm();
-      if (view === 'calendar-view') renderCalendar();
-      if (view === 'pipeline-view') renderPipeline();
-      if (view === 'crmteam-view') renderCRMTeam();
-    }
-    function renderCustomerList() {
-      const search = document.getElementById('customerSearch').value.toLowerCase();
-      const filtered = customers.filter(c => c.name.toLowerCase().includes(search));
-      const list = document.getElementById('customerList');
-      list.innerHTML = filtered.sort((a, b) => a.name.localeCompare(b.name)).map(c => `
-        <li class="customer-item p-3 cursor-pointer hover:bg-indigo-600 rounded-lg text-sm ${activeCustomer?.id === c.id ? 'bg-indigo-600' : ''}" data-customer-id="${c.id}">
-          ${c.name}
-        </li>`).join('');
-      document.querySelectorAll('.customer-item').forEach(item => {
-        item.onclick = () => {
-          document.querySelectorAll('.customer-item').forEach(i => i.classList.remove('bg-indigo-600'));
-          item.classList.add('bg-indigo-600');
-          activeCustomer = customers.find(c => c.id === item.dataset.customerId);
-          document.getElementById('currentCustomerName').textContent = activeCustomer.name;
-          updateCustomerStatusUI(activeCustomer.status);
-          navigateTo('dashboard-view');
-        };
-      });
-    }
-    document.getElementById('customerSearch').addEventListener('input', renderCustomerList);
-    function updateCustomerStatusUI(status) {
-      const bar = document.getElementById('customerStatusBar');
-      let color = 'bg-gray-200 text-gray-800';
-      if (status === 'Active Customer') color = 'bg-green-100 text-green-700';
-      else if (status === 'Prospect') color = 'bg-blue-100 text-blue-700';
-      bar.className = `mx-6 mt-4 p-2 font-semibold text-sm rounded-lg ${color}`;
-      bar.textContent = `Status: ${status || 'N/A'}`;
-    }
-    function renderDashboard() {
-      const view = document.getElementById('dashboard-view');
-      if (!activeCustomer) {
-        view.innerHTML = `<div class="text-center text-gray-500 mt-20">Select a customer to view dashboard</div>`;
-        return;
-      }
-      view.innerHTML = `<div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">${activeCustomer.name} - Dashboard</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold text-gray-700">Company Info</h3>
-              <p><strong>Industry:</strong> ${activeCustomer.industry}</p>
-              <p><strong>Revenue:</strong> ${activeCustomer.revenue}</p>
-              <p><strong>Employees:</strong> ${activeCustomer.employees}</p>
-              <p><strong>Address:</strong> ${activeCustomer.address}</p>
-              <p><strong>Website:</strong> <a href="http://${activeCustomer.website}" target="_blank" class="text-indigo-600">${activeCustomer.website}</a></p>
-              <p><strong>Lead Source:</strong> ${activeCustomer.leadSource}</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold text-gray-700">Financial & Transactional</h3>
-              <p><strong>CLV:</strong> ${activeCustomer.clv}</p>
-              <p><strong>Last Purchase:</strong> ${activeCustomer.lastPurchase || 'N/A'}</p>
-              <p><strong>First Purchase:</strong> ${activeCustomer.firstPurchase || 'N/A'}</p>
-              <p><strong>Purchase Frequency:</strong> ${activeCustomer.purchaseFrequency}</p>
-              <p><strong>Primary Product:</strong> ${activeCustomer.primaryProduct || 'N/A'}</p>
-              <p><strong>Subscription Tier:</strong> ${activeCustomer.subscriptionTier || 'N/A'}</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold text-gray-700">Engagement</h3>
-              <p><strong>Last Contact:</strong> ${activeCustomer.lastContact || 'N/A'}</p>
-              <p><strong>Next Task:</strong> ${activeCustomer.nextTask || 'None'}</p>
-              <p><strong>NPS:</strong> ${activeCustomer.nps || 'N/A'}</p>
-              <p><strong>Social:</strong> ${activeCustomer.social.join(', ')}</p>
-              <p><strong>Handle:</strong> ${activeCustomer.handle}</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold text-gray-700">Quick Actions</h3>
-              <button class="bg-indigo-600 text-white py-1 px-3 rounded text-sm" onclick="showNotification('Email sent')">Send Email</button>
-              <button class="bg-green-600 text-white py-1 px-3 rounded text-sm ml-2" onclick="showNotification('Call logged')">Log Call</button>
-            </div>
-          </div>
-        </div>`;
-    }
-    // === FULL CUSTOMER PROFILE ===
-    function renderCustomers() {
-      const view = document.getElementById('customers-view');
-      if (!activeCustomer) {
-        view.innerHTML = '<p class="text-center text-gray-500">Select a customer</p>';
-        return;
-      }
-      view.innerHTML = `
-        <div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Edit Customer Profile</h2>
-          <form id="customerForm" class="bg-white p-6 rounded-xl shadow space-y-6">
-            <div class="section">
-              <h3 class="font-semibold text-gray-700 mb-4">Identity & Firmographics</h3>
-              <div class="field-grid">
-                <div class="input-group"><label>Company Name *</label><input type="text" name="name" value="${activeCustomer.name}" required></div>
-                <div class="input-group"><label>Email *</label><input type="email" name="email" value="${activeCustomer.email}" required></div>
-                <div class="input-group"><label>Phone</label><input type="tel" name="phone" value="${activeCustomer.phone}"></div>
-                <div class="input-group"><label>Status</label>
-                  <select name="status">
-                    <option value="Prospect" ${activeCustomer.status === 'Prospect' ? 'selected' : ''}>Prospect</option>
-                    <option value="Active Customer" ${activeCustomer.status === 'Active Customer' ? 'selected' : ''}>Active Customer</option>
-                  </select>
-                </div>
-                <div class="input-group md:col-span-2"><label>Address</label><input type="text" name="address" value="${activeCustomer.address}"></div>
-                <div class="input-group"><label>Industry</label><input type="text" name="industry" value="${activeCustomer.industry}"></div>
-                <div class="input-group"><label>Revenue</label><input type="text" name="revenue" value="${activeCustomer.revenue}"></div>
-                <div class="input-group"><label>Employees</label><input type="text" name="employees" value="${activeCustomer.employees}"></div>
-                <div class="input-group"><label>Website</label><input type="url" name="website" value="${activeCustomer.website}"></div>
-                <div class="input-group"><label>Lead Source</label><input type="text" name="leadSource" value="${activeCustomer.leadSource}"></div>
-                <div class="input-group col-span-full">
-                  <label>Paddle Brands Used</label>
-                  <select multiple name="paddleBrandsUsed" size="5" class="h-32">
-                    ${paddleBrands.map(b => `<option value="${b}" ${activeCustomer.paddleBrandsUsed?.includes(b) ? 'selected' : ''}>${b}</option>`).join('')}
-                  </select>
-                  <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
-                </div>
-              </div>
-            </div>
-            <div class="section">
-              <h3 class="font-semibold text-gray-700 mb-4">Financial & Transactional</h3>
-              <div class="field-grid">
-                <div class="input-group"><label>CLV</label><input type="text" name="clv" value="${activeCustomer.clv}"></div>
-                <div class="input-group"><label>Last Purchase</label><input type="date" name="lastPurchase" value="${activeCustomer.lastPurchase}"></div>
-                <div class="input-group"><label>First Purchase</label><input type="date" name="firstPurchase" value="${activeCustomer.firstPurchase}"></div>
-                <div class="input-group"><label>Purchase Frequency</label><input type="number" name="purchaseFrequency" value="${activeCustomer.purchaseFrequency}"></div>
-                <div class="input-group"><label>Primary Product</label><input type="text" name="primaryProduct" value="${activeCustomer.primaryProduct}"></div>
-                <div class="input-group"><label>Subscription Tier</label><input type="text" name="subscriptionTier" value="${activeCustomer.subscriptionTier}"></div>
-                <div class="input-group"><label>AOV</label><input type="number" name="aov" value="${activeCustomer.aov}"></div>
-                <div class="input-group"><label>Lifetime Spend</label><input type="number" name="lifetimeSpend" value="${activeCustomer.lifetimeSpend}"></div>
-                <div class="input-group"><label>Orders Placed</label><input type="number" name="ordersPlaced" value="${activeCustomer.ordersPlaced}"></div>
-                <div class="input-group"><label>Return Rate (%)</label><input type="number" name="returnRate" value="${activeCustomer.returnRate}"></div>
-              </div>
-            </div>
-            <div class="section">
-              <h3 class="font-semibold text-gray-700 mb-4">Engagement & CRM</h3>
-              <div class="field-grid">
-                <div class="input-group"><label>Last Contact</label><input type="date" name="lastContact" value="${activeCustomer.lastContact}"></div>
-                <div class="input-group"><label>Next Task</label><input type="text" name="nextTask" value="${activeCustomer.nextTask}"></div>
-                <div class="input-group"><label>NPS</label><input type="number" name="nps" value="${activeCustomer.nps}"></div>
-                <div class="input-group"><label>Social</label><input type="text" name="social" value="${activeCustomer.social?.join(', ')}"></div>
-                <div class="input-group"><label>Handle</label><input type="text" name="handle" value="${activeCustomer.handle}"></div>
-                <div class="input-group"><label>Account Owner</label><input type="text" name="accountOwner" value="${activeCustomer.accountOwner}"></div>
-                <div class="input-group"><label>Team Division</label><input type="text" name="teamDivision" value="${activeCustomer.teamDivision}"></div>
-                <div class="input-group col-span-2"><label>Notes</label><textarea name="notes">${activeCustomer.notes}</textarea></div>
-                <div class="input-group"><label>Tags</label><input type="text" name="tags" value="${activeCustomer.tags?.join(', ')}"></div>
-                <div class="input-group"><label>Special Handling</label><input type="text" name="specialHandling" value="${activeCustomer.specialHandling}"></div>
-                <div class="input-group"><label>PO Required</label>
-                  <select name="poRequired">
-                    <option value="true" ${activeCustomer.poRequired ? 'selected' : ''}>Yes</option>
-                    <option value="false" ${!activeCustomer.poRequired ? 'selected' : ''}>No</option>
-                  </select>
-                </div>
-                <div class="input-group"><label>Preferred Shipping</label><input type="text" name="preferredShipping" value="${activeCustomer.preferredShipping}"></div>
-                <div class="input-group"><label>Preferred Carrier</label><input type="text" name="preferredCarrier" value="${activeCustomer.preferredCarrier}"></div>
-                <div class="input-group"><label>Payment Terms</label><input type="text" name="paymentTerms" value="${activeCustomer.paymentTerms}"></div>
-                <div class="input-group"><label>Credit Limit</label><input type="number" name="creditLimit" value="${activeCustomer.creditLimit}"></div>
-                <div class="input-group"><label>Billing Cycle</label><input type="text" name="billingCycle" value="${activeCustomer.billingCycle}"></div>
-                <div class="input-group"><label>Currency</label><input type="text" name="currency" value="${activeCustomer.currency}"></div>
-              </div>
-            </div>
-            <div class="flex justify-end">
-              <button type="button" id="saveCustomerBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>`;
-      document.getElementById('saveCustomerBtn').addEventListener('click', () => {
-        const form = document.getElementById('customerForm');
-        if (!form.reportValidity()) return;
-        const data = {};
-        form.querySelectorAll('input, select, textarea').forEach(f => {
-          if (f.name) {
-            if (f.multiple) data[f.name] = Array.from(f.selectedOptions).map(o => o.value);
-            else if (f.name === 'tags' || f.name === 'social') data[f.name] = f.value.split(',').map(s => s.trim()).filter(Boolean);
-            else if (f.name === 'poRequired') data[f.name] = f.value === 'true';
-            else if (f.type === 'number') data[f.name] = parseFloat(f.value) || 0;
-            else data[f.name] = f.value;
-          }
-        });
-        Object.assign(activeCustomer, data);
-        saveData();
-        showNotification('Customer saved!');
-        renderCustomerList();
-        navigateTo('dashboard-view');
-      });
-    }
-    // === NEW ORDER ===
-    function renderNewOrderForm() {
-      const view = document.getElementById('new-order-view');
-      view.innerHTML = `
-        <div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">New Order - ${activeCustomer.name}</h2>
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow">
-              <h3 class="text-xl font-bold mb-4 border-b pb-2">Order Items</h3>
-              <div id="orderLines"></div>
-              <button id="addLine" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg">
-                + Add Line
-              </button>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="text-xl font-bold mb-4 border-b pb-2">Summary</h3>
-              <div id="orderSummary" class="space-y-2"></div>
-              <div class="mt-4">
-                <label>Shipping Cost</label>
-                <input type="number" id="shippingCost" value="5.99" step="0.01" class="mt-1">
-              </div>
-              <div class="mt-4">
-                <label>ZIP Code (for tax)</label>
-                <input type="text" id="zipCode" placeholder="12345" class="mt-1">
-              </div>
-              <button id="processOrderBtn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-extrabold py-3 rounded-lg">
-                PROCESS ORDER
-              </button>
-            </div>
-          </div>
-        </div>`;
-      attachOrderListeners();
-    }
-
-    function attachOrderListeners() {
-      document.getElementById('addLine').addEventListener('click', () => {
-        const line = document.createElement('div');
-        line.className = 'line-item mb-4';
-        line.innerHTML = `
-          <select class="orderProduct">
-            <option>AcoustiSkin Paddle Skin</option>
-          </select>
-          <input type="number" class="orderQty" value="1" min="1" placeholder="Qty">
-          <input type="number" class="orderPrice" value="29.95" step="0.01" placeholder="Price">
-          <input type="text" class="orderDiscount" placeholder="Discount Code">
-          <select class="orderAffiliate">
-            <option>None</option>
-            ${affiliates.map(a => `<option>${a}</option>`).join('')}
-          </select>
-          <span class="line-total">$29.95</span>
-          <button class="text-xs text-red-600" onclick="removeLine(this)">Remove</button>`;
-        document.getElementById('orderItemsList').appendChild(line);
-        line.querySelectorAll('input, select').forEach(el => el.addEventListener('input', updateOrderDisplay));
-      });
-      document.getElementById('processOrderBtn').addEventListener('click', () => {
-        showNotification('Order processed!', 'bg-green-100 text-green-700');
-      });
-    }
-    function removeLine(btn) {
-      btn.parentElement.remove();
-      updateOrderDisplay();
-    }
-    function updateOrderDisplay() {
-      const lines = document.querySelectorAll('.line-item');
-      let subtotal = 0;
-      lines.forEach(line => {
-        const qty = parseFloat(line.querySelector('.orderQty').value) || 0;
-        const price = parseFloat(line.querySelector('.orderPrice').value) || 0;
-        const total = qty * price;
-        line.querySelector('.line-total').textContent = `$${total.toFixed(2)}`;
-        subtotal += total;
-      });
-      const shipping = parseFloat(document.getElementById('shippingCost').value) || 0;
-      const total = subtotal + shipping;
-      document.getElementById('orderSummary').innerHTML = `
-        <div class="flex justify-between"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
-        <div class="flex justify-between"><span>Shipping:</span><span>$${shipping.toFixed(2)}</span></div>
-        <div class="flex justify-between font-bold text-lg mt-2"><span>Total:</span><span class="text-indigo-600">$${total.toFixed(2)}</span></div>`;
-    }
-    // === INVENTORY MANAGEMENT ===
-    function renderInventory() {
-      const view = document.getElementById('inventory-view');
-      view.innerHTML = `
-        <div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Inventory Management</h2>
-          <button id="addInventoryBtn" class="bg-indigo-600 text-white py-2 px-4 rounded mb-4">+ Add Product</button>
-          <div class="bg-white rounded-xl shadow overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                ${inventory.map(item => `
-                  <tr>
-                    <td class="px-4 py-3 text-sm">${item.sku}</td>
-                    <td class="px-4 py-3 text-sm">${item.name}</td>
-                    <td class="px-4 py-3 text-sm">${item.brand}</td>
-                    <td class="px-4 py-3 text-sm">${item.stock}</td>
-                    <td class="px-4 py-3 text-sm">$${item.price}</td>
-                    <td class="px-4 py-3 text-sm"><span class="badge ${item.stock <= item.reorder ? 'low' : item.stock <= item.reorder * 2 ? 'medium' : 'high'}">
-                      ${item.stock <= item.reorder ? 'Low' : item.stock <= item.reorder * 2 ? 'Medium' : 'Healthy'}
-                    </span></td>
-                    <td class="px-4 py-3 text-sm">
-                      <button onclick="adjustStock('${item.sku}', 1)" class="text-green-600 mr-2">+1</button>
-                      <button onclick="adjustStock('${item.sku}', -1)" class="text-red-600">-1</button>
-                    </td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-      document.getElementById('addInventoryBtn').addEventListener('click', () => {
-        const sku = prompt("SKU:");
-        const name = prompt("Product Name:");
-        const brand = prompt("Brand:");
-        const price = parseFloat(prompt("Price:"));
-        const reorder = parseInt(prompt("Reorder Level:"));
-        if (sku && name && brand && price && reorder) {
-          inventory.push({ sku, name, brand, stock: 0, price, reorder });
-          saveData();
-          renderInventory();
-        }
-      });
-    }
-    function adjustStock(sku, change) {
-      const item = inventory.find(i => i.sku === sku);
-      if (item) {
-        item.stock = Math.max(0, item.stock + change);
-        saveData();
-        renderInventory();
-      }
-    }
-    // === ORDER TRACKING ===
-    function renderOrderTracking() {
-      const view = document.getElementById('orders-view');
-      view.innerHTML = `
-        <div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Order Tracking</h2>
-          <div class="bg-white rounded-xl shadow overflow-hidden">
-            ${orders.map(o => {
-              const cust = customers.find(c => c.id === o.customerId);
-              return `<div class="border-b p-4">
-                <div class="flex justify-between">
-                  <strong>#${o.id}</strong>
-                  <span class="badge ${o.status === 'Shipped' ? 'high' : o.status === 'Processing' ? 'medium' : 'low'}">${o.status || 'Processing'}</span>
-                </div>
-                <p class="text-sm text-gray-600">${o.date} | ${cust?.name} | $${o.total.toFixed(2)}</p>
-                <button onclick="updateOrderStatus('${o.id}')" class="text-xs text-indigo-600">Update Status</button>
-              </div>`;
-            }).join('') || '<p class="p-4 text-gray-500">No orders yet</p>'}
-          </div>
-        </div>`;
-    }
-    function updateOrderStatus(id) {
-      const order = orders.find(o => o.id === id);
-      const status = prompt("New status:", order.status || "Processing");
-      if (status) {
-        order.status = status;
-        saveData();
-        renderOrderTracking();
-      }
-    }
-    // === SALES PERFORMANCE REPORTS ===
-    function renderReports() {
-      const view = document.getElementById('reports-view');
-      const brandSales = {};
-      orders.forEach(o => {
-        o.items.forEach(i => {
-          brandSales[i.brand] = (brandSales[i.brand] || 0) + i.qty;
-        });
-      });
-      view.innerHTML = `
-        <div class="max-w-7xl mx-auto">
-          <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Sales Performance</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold mb-4">Brand Performance</h3>
-              <div class="space-y-2">
-                ${Object.entries(brandSales).sort((a,b) => b[1]-a[1]).map(([brand, qty]) => `
-                  <div class="flex justify-between">
-                    <span>${brand}</span>
-                    <span class="font-medium">${qty} units</span>
-                  </div>`).join('')}
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow">
-              <h3 class="font-semibold mb-4">Top Customers</h3>
-              <div class="space-y-2">
-                ${customers.sort((a,b) => b.lifetimeSpend - a.lifetimeSpend).slice(0,5).map(c => `
-                  <div class="flex justify-between">
-                    <span>${c.name}</span>
-                    <span class="font-medium">$${c.lifetimeSpend.toFixed(0)}</span>
-                  </div>`).join('')}
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }
-    // === FULL CALENDAR ===
-    function renderCalendar() {
-      const view = document.getElementById('calendar-view');
-      view.innerHTML = `<!-- Full Calendar code -->`;
-      // Full calendar implementation with day/week/month/year, time slots, drag-resize, etc.
-    }
-
-    // === PIPELINE ===
-    function renderPipeline() {
-      const view = document.getElementById('pipeline-view');
-      view.innerHTML = `<!-- Full Pipeline code -->`;
-      // Full pipeline with drag-drop
-    }
-
-    // === CRM TEAM ===
-    function renderCRMTeam() {
-      const view = document.getElementById('crmteam-view');
-      view.innerHTML = `<!-- Full Team code with add/remove -->`;
-      // Full team with commissions
-    }
-
-    // === INIT ===
+    const affiliates = ['Allyson', 'Sindi', 'Lori', 'Wen', 'Janine', 'Winnie'];
+    
+    // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
       renderCustomerList();
-      setupEventListeners();
-      if (activeCustomer) {
-        document.getElementById('currentCustomerName').textContent = activeCustomer.name;
-        updateCustomerStatusUI(activeCustomer.status);
-      }
+      setupGlobalListeners();
+      
+      // Default View
       navigateTo('dashboard-view');
     });
+
+    function loadData() {
+      // Try loading from localStorage
+      const saved = localStorage.getItem('acoustiskin_crm_data');
+      if (saved) {
+        state = JSON.parse(saved);
+      } else {
+        // SEED DUMMY DATA IF EMPTY
+        state.customers = [
+          { id: '1', name: 'Pickleball Paradise', email: 'contact@pbparadise.com', status: 'Active Customer', revenue: '$12,000', lastContact: '2023-10-24', notes: 'Interested in custom skins.' },
+          { id: '2', name: 'Court Kings', email: 'info@courtkings.com', status: 'Prospect', revenue: '$0', lastContact: '2023-10-20', notes: 'Sent catalog.' },
+          { id: '3', name: 'Dana Lurie', email: 'dana@example.com', status: 'Active Customer', revenue: '$5,000', lastContact: '2023-11-01', notes: 'Loyal customer.' }
+        ];
+        state.pipeline = [
+          { id: 'd1', title: 'Bulk Order - 500 Skins', customer: 'Pickleball Paradise', value: 5000, stage: 'Negotiation' },
+          { id: 'd2', title: 'New Distributor Partnership', customer: 'Court Kings', value: 12000, stage: 'Lead' }
+        ];
+        state.team = [
+            { id: 't1', name: 'Dana Lurie', role: 'Sales Manager', email: 'dana@acoustiskin.com', sales: 45000 },
+            { id: 't2', name: 'Allyson', role: 'Affiliate', email: 'allyson@collab.com', sales: 1200 }
+        ];
+        state.orders = [
+            { id: 'ORD-001', customerId: '1', date: '2023-10-01', status: 'Shipped', total: 250.00 },
+            { id: 'ORD-002', customerId: '3', date: '2023-10-15', status: 'Processing', total: 49.95 }
+        ];
+        saveData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('acoustiskin_crm_data', JSON.stringify(state));
+    }
+
+    // --- NAVIGATION ---
+    window.navigateTo = function(viewId) {
+      // Hide all views
+      document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+      
+      // Show selected view
+      const target = document.getElementById(viewId);
+      if(target) target.classList.remove('hidden');
+
+      // Contextual Button visibility
+      const editBtn = document.getElementById('editCustomerButton');
+      const isCustomerActive = !!state.activeCustomer;
+      
+      if (viewId === 'customers-view' && isCustomerActive) {
+        renderCustomersForm(); 
+        editBtn.classList.remove('hidden');
+      } else if (viewId === 'dashboard-view') {
+        renderDashboard();
+        if(isCustomerActive) editBtn.classList.remove('hidden');
+      } else {
+        editBtn.classList.add('hidden');
+      }
+
+      if (viewId === 'orders-view') renderOrdersList();
+      if (viewId === 'calendar-view') renderCalendar();
+      if (viewId === 'pipeline-view') renderPipeline();
+      if (viewId === 'crmteam-view') renderCRMTeam();
+    }
+
+    function setupGlobalListeners() {
+      document.getElementById('customerSearch').addEventListener('input', renderCustomerList);
+      document.getElementById('newCustomerButton').addEventListener('click', createNewCustomer);
+      
+      // Quick link to edit profile
+      document.getElementById('editCustomerButton').addEventListener('click', () => {
+        navigateTo('customers-view');
+      });
+
+      // Add Line Item Listener for Orders
+      document.getElementById('addLineBtn').addEventListener('click', addOrderLine);
+      document.getElementById('processOrderBtn').addEventListener('click', processNewOrder);
+    }
+
+    // --- RENDERERS ---
+
+    function renderCustomerList() {
+      const search = document.getElementById('customerSearch').value.toLowerCase();
+      const filtered = state.customers.filter(c => c.name.toLowerCase().includes(search));
+      const list = document.getElementById('customerList');
+      
+      list.innerHTML = filtered.map(c => `
+        <li class="p-3 cursor-pointer hover:bg-indigo-600 rounded-lg text-sm flex justify-between items-center group ${state.activeCustomer?.id === c.id ? 'bg-indigo-600' : ''}" 
+            onclick="selectCustomer('${c.id}')">
+          <span class="font-medium text-indigo-100 group-hover:text-white">${c.name}</span>
+        </li>`).join('');
+    }
+
+    window.selectCustomer = function(id) {
+      state.activeCustomer = state.customers.find(c => c.id === id);
+      document.getElementById('currentCustomerName').textContent = state.activeCustomer.name;
+      
+      // Update UI Status Bar
+      const bar = document.getElementById('customerStatusBar');
+      bar.classList.remove('hidden');
+      bar.className = `mx-6 mt-4 p-3 font-semibold text-sm rounded-lg border ${
+        state.activeCustomer.status === 'Active Customer' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-blue-50 border-blue-200 text-blue-700'
+      }`;
+      bar.innerHTML = `Current Status: ${state.activeCustomer.status}`;
+
+      navigateTo('dashboard-view');
+      renderCustomerList(); // Re-render to highlight selection
+    }
+
+    function createNewCustomer() {
+      const name = prompt("Enter Company Name:");
+      if(!name) return;
+      const newC = { id: Date.now().toString(), name: name, status: 'Prospect', email: '', phone: '', notes: '' };
+      state.customers.push(newC);
+      saveData();
+      selectCustomer(newC.id);
+      navigateTo('customers-view');
+    }
+
+    function renderDashboard() {
+      const view = document.getElementById('dashboard-view');
+      const c = state.activeCustomer;
+      
+      if (!c) {
+        view.innerHTML = `<div class="text-center mt-20 opacity-50">
+          <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          <h3 class="text-xl font-bold">No Customer Selected</h3>
+          <p>Please select a customer from the sidebar to view details.</p>
+        </div>`;
+        return;
+      }
+
+      view.innerHTML = `
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 bg-white p-6 rounded-xl shadow border border-gray-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Company Snapshot</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div><span class="text-xs text-gray-500 block">Industry</span>${c.industry || '-'}</div>
+              <div><span class="text-xs text-gray-500 block">Revenue</span>${c.revenue || '-'}</div>
+              <div><span class="text-xs text-gray-500 block">Employees</span>${c.employees || '-'}</div>
+              <div><span class="text-xs text-gray-500 block">Website</span><a href="${c.website || '#'}" class="text-indigo-600 hover:underline" target="_blank">${c.website || '-'}</a></div>
+              <div class="col-span-2"><span class="text-xs text-gray-500 block">Address</span>${c.address || '-'}</div>
+            </div>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Quick Actions</h3>
+            <div class="space-y-3">
+               <button onclick="showNotification('Email composition opened')" class="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-2 rounded hover:bg-indigo-100">
+                 <span>✉️ Send Email</span>
+               </button>
+               <button onclick="showNotification('Call logged')" class="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 py-2 rounded hover:bg-green-100">
+                 <span>📞 Log Call</span>
+               </button>
+               <button onclick="navigateTo('orders-view'); toggleOrderMode('create')" class="w-full flex items-center justify-center gap-2 bg-orange-50 text-orange-700 py-2 rounded hover:bg-orange-100">
+                 <span>📄 New Order</span>
+               </button>
+            </div>
+            <div class="mt-6">
+               <h4 class="font-bold text-sm mb-2">Contact Info</h4>
+               <p class="text-sm mb-1">📧 ${c.email || 'No email'}</p>
+               <p class="text-sm">📱 ${c.phone || 'No phone'}</p>
+            </div>
+          </div>
+          
+          <div class="md:col-span-3 bg-white p-6 rounded-xl shadow border border-gray-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Recent Notes</h3>
+            <p class="bg-yellow-50 p-4 rounded text-gray-700 italic">"${c.notes || 'No notes available.'}"</p>
+          </div>
+        </div>`;
+    }
+
+    function renderCustomersForm() {
+      const c = state.activeCustomer;
+      const container = document.getElementById('customers-view');
+      if(!c) return;
+
+      container.innerHTML = `
+        <div class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow">
+          <h2 class="text-2xl font-bold mb-6">Edit Profile: ${c.name}</h2>
+          <form id="customerForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div class="input-group"><label>Company Name</label><input type="text" name="name" value="${c.name || ''}"></div>
+               <div class="input-group"><label>Email</label><input type="email" name="email" value="${c.email || ''}"></div>
+               <div class="input-group"><label>Phone</label><input type="text" name="phone" value="${c.phone || ''}"></div>
+               <div class="input-group"><label>Status</label>
+                 <select name="status">
+                   <option ${c.status==='Prospect'?'selected':''}>Prospect</option>
+                   <option ${c.status==='Active Customer'?'selected':''}>Active Customer</option>
+                   <option ${c.status==='Churned'?'selected':''}>Churned</option>
+                 </select>
+               </div>
+               <div class="input-group md:col-span-2"><label>Address</label><input type="text" name="address" value="${c.address || ''}"></div>
+               <div class="input-group md:col-span-2"><label>Notes</label><textarea name="notes" rows="3">${c.notes || ''}</textarea></div>
+            </div>
+            <div class="flex justify-end pt-4 border-t">
+              <button type="button" onclick="saveCustomerForm()" class="bg-indigo-600 text-white px-6 py-2 rounded font-bold hover:bg-indigo-700">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function saveCustomerForm() {
+      const form = document.getElementById('customerForm');
+      const formData = new FormData(form);
+      
+      // Update State object
+      const c = state.activeCustomer;
+      c.name = formData.get('name');
+      c.email = formData.get('email');
+      c.phone = formData.get('phone');
+      c.status = formData.get('status');
+      c.address = formData.get('address');
+      c.notes = formData.get('notes');
+      
+      saveData();
+      showNotification('Customer Profile Updated!', 'bg-green-100 text-green-800');
+      renderCustomerList();
+      navigateTo('dashboard-view');
+    }
+
+    // --- ORDER LOGIC ---
+    window.toggleOrderMode = function(mode) {
+      if(mode === 'create') {
+         if(!state.activeCustomer) {
+           alert("Please select a customer first.");
+           return;
+         }
+         document.getElementById('order-list-container').classList.add('hidden');
+         document.getElementById('new-order-container').classList.remove('hidden');
+         // Clear previous lines
+         document.getElementById('orderItemsList').innerHTML = '';
+         addOrderLine(); // Add first line
+      } else {
+         document.getElementById('order-list-container').classList.remove('hidden');
+         document.getElementById('new-order-container').classList.add('hidden');
+      }
+    }
+
+    function renderOrdersList() {
+      const tbody = document.getElementById('ordersTableBody');
+      // If customer active, filter by customer, else show all
+      const filtered = state.activeCustomer 
+         ? state.orders.filter(o => o.customerId === state.activeCustomer.id) 
+         : state.orders;
+
+      if(filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">No orders found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(o => {
+        const custName = state.customers.find(c => c.id === o.customerId)?.name || 'Unknown';
+        return `
+        <tr>
+           <td class="px-6 py-4 text-sm text-gray-900 font-medium">#${o.id}</td>
+           <td class="px-6 py-4 text-sm text-gray-500">${custName}</td>
+           <td class="px-6 py-4 text-sm text-gray-500">${o.date}</td>
+           <td class="px-6 py-4 text-sm"><span class="px-2 py-1 rounded text-xs font-semibold ${o.status === 'Shipped' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${o.status}</span></td>
+           <td class="px-6 py-4 text-sm text-gray-900 font-bold">$${o.total.toFixed(2)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function addOrderLine() {
+      const div = document.createElement('div');
+      div.className = "grid grid-cols-12 gap-2 mb-2 items-center order-line";
+      div.innerHTML = `
+         <div class="col-span-6">
+           <select class="w-full border rounded p-2 text-sm product-select">
+             <option value="29.95">AcoustiSkin Paddle Skin ($29.95)</option>
+             <option value="15.00">Overgrip 3-Pack ($15.00)</option>
+             <option value="9.99">Edge Guard Tape ($9.99)</option>
+           </select>
+         </div>
+         <div class="col-span-2">
+           <input type="number" value="1" min="1" class="w-full border rounded p-2 text-sm qty-input" oninput="calculateOrderTotal()">
+         </div>
+         <div class="col-span-3 text-right font-mono text-sm line-total">$29.95</div>
+         <div class="col-span-1 text-center">
+           <button class="text-red-500 hover:text-red-700" onclick="this.parentElement.parentElement.remove(); calculateOrderTotal()">×</button>
+         </div>
+      `;
+      document.getElementById('orderItemsList').appendChild(div);
+      // Add listener to select
+      div.querySelector('.product-select').addEventListener('change', calculateOrderTotal);
+      calculateOrderTotal();
+    }
+
+    function calculateOrderTotal() {
+      let subtotal = 0;
+      document.querySelectorAll('.order-line').forEach(row => {
+         const price = parseFloat(row.querySelector('.product-select').value);
+         const qty = parseInt(row.querySelector('.qty-input').value);
+         const total = price * qty;
+         row.querySelector('.line-total').innerText = `$${total.toFixed(2)}`;
+         subtotal += total;
+      });
+      
+      const shipping = parseFloat(document.getElementById('shippingCost').value) || 0;
+      const total = subtotal + shipping;
+      
+      document.getElementById('orderSummary').innerHTML = `
+         <div class="flex justify-between"><span>Subtotal:</span> <span>$${subtotal.toFixed(2)}</span></div>
+         <div class="flex justify-between font-bold text-lg mt-2 text-indigo-700 border-t pt-2"><span>Total:</span> <span>$${total.toFixed(2)}</span></div>
+      `;
+      return total;
+    }
+
+    function processNewOrder() {
+      const total = calculateOrderTotal();
+      const newOrder = {
+        id: `ORD-${Math.floor(Math.random()*10000)}`,
+        customerId: state.activeCustomer.id,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Processing',
+        total: total
+      };
+      state.orders.unshift(newOrder); // Add to top
+      saveData();
+      showNotification('Order Successfully Created!', 'bg-green-100 text-green-800');
+      toggleOrderMode('list');
+      renderOrdersList();
+    }
+
+    // --- CALENDAR LOGIC ---
+    function renderCalendar() {
+       const grid = document.getElementById('calendarGrid');
+       grid.innerHTML = '';
+       // Simple 35 day grid
+       for(let i=1; i<=35; i++) {
+          const day = i > 30 ? i - 30 : i;
+          const isNextMonth = i > 30;
+          const cell = document.createElement('div');
+          cell.className = `calendar-day border-r border-b ${isNextMonth ? 'bg-gray-50 text-gray-400' : 'hover:bg-indigo-50 cursor-pointer'}`;
+          cell.innerHTML = `<div class="font-bold mb-1">${day}</div>`;
+          
+          // Add random dummy events
+          if(!isNextMonth && (i === 5 || i === 12 || i === 24)) {
+             cell.innerHTML += `<div class="text-xs bg-indigo-100 text-indigo-700 p-1 rounded mb-1">Meeting: Dana</div>`;
+          }
+          if(!isNextMonth && (i === 12)) {
+             cell.innerHTML += `<div class="text-xs bg-green-100 text-green-700 p-1 rounded">Follow-up</div>`;
+          }
+          
+          grid.appendChild(cell);
+       }
+    }
+
+    // --- PIPELINE (KANBAN) LOGIC ---
+    function renderPipeline() {
+      const board = document.getElementById('kanbanBoard');
+      const stages = ['Lead', 'Contacted', 'Negotiation', 'Closed Won'];
+      const colors = {'Lead': 'border-blue-500', 'Contacted': 'border-yellow-500', 'Negotiation': 'border-purple-500', 'Closed Won': 'border-green-500'};
+      
+      board.innerHTML = stages.map(stage => `
+         <div class="kanban-column shadow-inner" ondrop="drop(event, '${stage}')" ondragover="allowDrop(event)">
+            <h3 class="font-bold text-gray-600 mb-4 flex justify-between">${stage} <span class="bg-gray-200 px-2 rounded text-sm">${state.pipeline.filter(d=>d.stage===stage).length}</span></h3>
+            <div class="space-y-3 min-h-[200px]">
+              ${state.pipeline.filter(d => d.stage === stage).map(deal => `
+                <div id="${deal.id}" draggable="true" ondragstart="drag(event)" class="kanban-card ${colors[stage]}">
+                  <h4 class="font-bold text-sm text-gray-800">${deal.title}</h4>
+                  <p class="text-xs text-gray-500 mt-1">${deal.customer}</p>
+                  <div class="mt-2 flex justify-between items-center">
+                    <span class="text-xs font-bold text-indigo-600">$${deal.value.toLocaleString()}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+         </div>
+      `).join('');
+    }
+
+    // Drag and Drop Helpers
+    window.allowDrop = function(ev) { ev.preventDefault(); }
+    window.drag = function(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+    window.drop = function(ev, newStage) {
+      ev.preventDefault();
+      const dealId = ev.dataTransfer.getData("text");
+      const deal = state.pipeline.find(d => d.id === dealId);
+      if(deal) {
+        deal.stage = newStage;
+        saveData();
+        renderPipeline(); // Re-render
+      }
+    }
+
+    // --- CRM TEAM LOGIC ---
+    function renderCRMTeam() {
+      const grid = document.getElementById('teamGrid');
+      grid.innerHTML = state.team.map(member => `
+         <div class="bg-white p-6 rounded-xl shadow border flex flex-col items-center text-center relative">
+            <button class="absolute top-2 right-2 text-red-400 hover:text-red-600" onclick="removeTeamMember('${member.id}')">×</button>
+            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl mb-4">
+              ${member.name.charAt(0)}
+            </div>
+            <h3 class="font-bold text-lg">${member.name}</h3>
+            <p class="text-sm text-gray-500 mb-4">${member.role}</p>
+            <div class="w-full border-t pt-4 flex justify-between text-sm">
+               <span>Sales YTD</span>
+               <span class="font-bold text-green-600">$${member.sales.toLocaleString()}</span>
+            </div>
+            <div class="w-full mt-2 flex justify-between text-sm">
+               <span>Commission</span>
+               <span class="font-bold text-gray-600">10%</span>
+            </div>
+         </div>
+      `).join('');
+    }
+
+    window.addTeamMember = function() {
+       const name = prompt("Member Name:");
+       const role = prompt("Role (Manager, Affiliate, etc):");
+       if(name && role) {
+         state.team.push({ id: 't'+Date.now(), name, role, email: '', sales: 0 });
+         saveData();
+         renderCRMTeam();
+       }
+    }
+    
+    window.removeTeamMember = function(id) {
+       if(confirm('Remove this team member?')) {
+         state.team = state.team.filter(t => t.id !== id);
+         saveData();
+         renderCRMTeam();
+       }
+    }
+
+    // --- UTILS ---
+    window.showNotification = function(msg, classes = 'bg-indigo-600 text-white') {
+      const n = document.getElementById('notification');
+      n.textContent = msg;
+      n.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-xl text-sm font-medium transition-all duration-300 ${classes}`;
+      n.classList.remove('hidden');
+      n.classList.remove('translate-y-[-100%]');
+      setTimeout(() => {
+         n.classList.add('hidden');
+      }, 3000);
+    }
+
   </script>
 </body>
 </html>
